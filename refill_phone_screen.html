@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="styles\transfer_screen_styles.css">
+</head>
+<header class="header">
+    <img src="icons\logo.png" alt="Логотип банку" class="logo">
+    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
+        <a href="deposits.html" class="tab-link-fields">депозит</a>
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="notifications.html"><img src="icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
+        <a href="client_cabinet.html"><img src="icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="container">
+        <main class="form-container">
+           
+            <form class="transfer-form" action="home_screen.html" method="get">
+                <label for="surname">З картки</label>
+                <select id="card_number" name="card_number">
+                    <option value="">Оберіть картку</option>
+                    <option value="credit">4441 1110 4340 0049</option>
+                    <option value="debit">4441 1110 5607 7047</option>
+                </select>
+
+                <label for="phone_number">Номер телефону</label>
+                <input type="text" id="phone_number" name="phone_number" placeholder="Введіть номер ">
+
+                <label for="sum">Сума переказу</label>
+                <input type="text" id="sum" name="sum" placeholder="Введіть суму">
+
+
+                <label for="currency">Валюта</label>
+                <select id="currency" name="currency">
+                    <option value="">Оберіть валюту</option>
+                    <option value="credit">USD</option>
+                    <option value="debit">EUR</option>
+                    <option value="debit">UAH</option>
+                </select>            
+               
+
+                <button type="submit">Переказати</button>
+            </form>
+        </main>
+    </div>
+    
+    
+</body>
+</html>

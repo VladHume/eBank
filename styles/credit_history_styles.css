@@ -1,0 +1,240 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #ECECEC;
+    color: #333;
+}
+
+/* Контейнер */
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Хедер */
+.header {
+    display: flex;
+    align-items: center;
+    background-color: #4CAF50;
+    padding: 5px;
+    margin-bottom: 25px;
+    border-radius: 10px 10px 0 0;
+    color: #fff;
+    text-align: center;
+}
+
+
+
+.logo {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+.tab-link-fields {
+    text-decoration: none;
+    font-size: 20px;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+.tab-link-fields-icon{
+    height: 35px;
+    width: 35px;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+.tab-link-fields-icon:hover{
+    border-bottom: 2px solid #ffffff;
+}
+
+.menu {
+    width: 100%;
+    display: flex; /* Вирівнює елементи в один рядок */
+    justify-content: flex-end; /* Розташовує блок справа */
+    align-items: center; /* Вирівнює елементи по вертикалі */
+}
+
+.tab-link-fields:hover {
+    border-bottom: 2px solid #ffffff;
+}
+
+
+
+.tab-link-fields-arrow{
+    height: 35px;
+    width: 35px;
+    margin: 0 10px;
+    padding: 5px 10px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+.tab-link-fields-arrow:hover{
+    border-bottom: 2px solid #000000;
+}
+
+.ebank-field {
+    text-decoration: none;
+    font-size: 32px;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    margin: 0 10px;
+    /* padding: 5px 10px; */
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+
+.ebank-field:hover{
+    border-bottom: 2px solid #ffffff;
+}
+
+
+.transactions-text{
+    font-size: 25px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.transactions-container{
+    width: 100%;
+    margin-left: 100px;
+    margin-top: 50px;
+      
+    
+}
+
+.transaction {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 70%;
+    height: 70px;
+    background-color: #fff;
+    margin-bottom: 20px;
+    gap: 80px;
+    text-decoration: none; /* Прибираємо підкреслення */
+    color: inherit; /* Використовуємо кольори, як у блоці */
+    border-radius: 5px; /* Додаємо округлені кути, якщо потрібно */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Легкий ефект тіні */
+    transition: transform 0.2s, box-shadow 0.2s; /* Анімація при наведенні */
+}
+
+.transaction:hover {
+    transform: scale(1.02); /* Збільшуємо трохи блок при наведенні */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Сильніша тінь */
+}
+
+
+.transaction-text{
+    font-size: 16px;
+    font-weight: bolder;
+    margin-left: 30px;
+    
+    top: 50%;
+}
+
+.image-button {
+    border: none; /* Видаляємо рамку кнопки */
+    background: none; /* Видаляємо фон кнопки */
+    cursor: pointer; /* Вказівник змінюється на "руку" */
+    padding: 0; /* Видаляємо внутрішні відступи */
+    margin-right: 25px;
+}
+
+.image-button img {
+    width: 35px; /* Ширина картинки */
+    height: 40px; /* Висота картинки */
+}
+
+.sum{
+    font-size: 16px;
+    font-weight: bolder;
+    margin-left: 50px;
+    margin-top: 10px;
+    
+}
+
+.status{
+    font-size: 16px;
+    margin-left: 600px;
+    margin-top: 10px;
+}
+
+.status-container {
+    display: flex; /* Робить елементи в одному ряду */
+    align-items: center; /* Вирівнює елементи по вертикалі */
+    margin-right: 10px; /* Відступ від правого краю */
+    gap: 70px; /* Відступ між статусом і кнопкою */
+}
+
+
+.status-value{
+    font-size: 16px;
+    /* margin-left: 440px; */
+    font-weight: bold;
+    color: #4CAF50;
+   
+}
+
+
+.deposit_button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 170px;
+    height: 40px;
+    background-color: #4CAF50; /* Зелений фон */
+    border: none; /* Видалення обводки */
+    border-radius: 15px;
+    color: #fff; /* Білий текст */
+    font-size: 16px;
+    font-weight: bold; /* Жирний шрифт */
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s; /* Анімація при наведенні */
+}
+
+.deposit_button:hover {
+    background-color: #45a049; /* Трохи темніший зелений при наведенні */
+}
+
+.deposit_button_text{
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    
+}
+
+
+
+
+.button_box{
+    width: 70%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+

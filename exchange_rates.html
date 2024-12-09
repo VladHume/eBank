@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="styles\exchange_rates_styles.css">
+</head>
+<header class="header">
+    <img src="icons\logo.png" alt="Логотип банку" class="logo">
+    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
+        <a href="deposits.html" class="tab-link-fields">депозит</a>
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="notifications.html"><img src="icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
+        <a href="client_cabinet.html"><img src="icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="main-container">
+        <!-- Блок курсу валют -->
+        <div class="exchange-rates-container">
+            <h2 class="section-title">Курс валют</h2>
+            <div class="exchange-rates">
+                <div class="currency-row">
+                    <img src="icons\USD.png" alt="USD" class="currency-icon">
+                    <span class="currency-value">41.38 USD</span>
+                </div>
+                <div class="currency-row">
+                    <img src="icons\UAH.png" alt="UAH" class="currency-icon">
+                    <span class="currency-value">41.38 USD</span>
+                </div>
+                <div class="currency-row">
+                    <img src="icons\EUR.png" alt="EUR" class="currency-icon">
+                    <span class="currency-value">41.38 EUR</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блок конвертації валюти -->
+        <div class="conversion-container">
+            <div class="conversion-header">
+                <h2 class="section-title">Конвертація валюти</h2>
+                <a href="home_screen.html">
+                    <img src="icons\arrow_icon.png" alt="Перейти" class="tab-link-fields-arrow">
+                </a>
+                
+            </div>
+            <form class="conversion-form">
+                <label for="currency">З валюти</label>
+                <select id="currency" name="currency" class="form-input">
+                    <option value="">Оберіть валюту</option>
+                    <option value="credit">USD</option>
+                    <option value="debit">EUR</option>
+                    <option value="debit">UAH</option>
+                </select>
+                <label for="to-currency">У валюту</label>
+                <select id="currency" name="currency" class="form-input">
+                    <option value="">Оберіть валюту</option>
+                    <option value="credit">USD</option>
+                    <option value="debit">EUR</option>
+                    <option value="debit">UAH</option>
+                </select>
+                
+                <label for="account-number">З картки</label>
+                <input type="text" id="account-number" class="form-input">
+                <label for="account-number">На картку</label>
+                <input type="text" id="account-number" class="form-input">
+                <label for="amount">Сума</label>
+                <input type="text" id="amount" class="form-input">
+            </form>
+        </div>
+    </div>
+</body>
+
+
+</html>

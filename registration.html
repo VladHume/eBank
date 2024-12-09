@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="styles\registration_styles.css">
+</head>
+<body>
+    <header class="header">
+        <img src="icons\logo.png" alt="Логотип банку" class="logo">
+        <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
+    </header>
+    <div class="container">
+        <main class="form-container">
+            <div class="tabs">
+                <a href="index.html" class="tab-link">Вхід</a>
+                <button class="active">Реєстрація</button>
+            </div>
+            <form class="login-form" action="creating_account_screen.html" method="get">
+                <label for="surname">Прізвище</label>
+                <input type="text" id="surname" name="surname" placeholder="Введіть прізвище">
+
+                <label for="name">Ім'я</label>
+                <input type="text" id="name" name="name" placeholder="Введіть ім'я">
+
+                <label for="patronymic">По батькові</label>
+                <input type="text" id="patronymic" name="patronymic" placeholder="Введіть по батькові">
+
+                <label for="email">email</label>
+                <input type="text" id="email" name="email" placeholder="Введіть електронну пошту">
+
+                <label for="phone number">Номер телефону</label>
+                <input type="text" id="phone number" name="phone number" placeholder="(+38)">
+
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Введіть пароль">
+                
+                <label for="passport id">Номер паспорта</label>
+                <input type="text" id="passport id" name="passport id" placeholder="Введіть номер паспорта">
+
+                <label for="taxpayer card id">РНОКПП</label>
+                <input type="text" id="taxpayer card id" name="taxpayer card id" placeholder="Введіть РНОКПП">
+
+                <label for="address">Адреса</label>
+                <input type="text" id="address" name="address" placeholder="Введіть адресу проживання">
+
+                <button type="submit">Продовжити</button>
+            </form>
+        </main>
+    </div>
+    
+    
+</body>
+</html>
