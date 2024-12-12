@@ -223,7 +223,6 @@ def update_info():
         passport_id = request.form['passport id']
         address = request.form['address']
         email = request.form['email']
-        taxpayer_card_id = request.form.get('taxpayer card id')
 
         cursor = mysql.connection.cursor()
 
@@ -238,9 +237,9 @@ def update_info():
 
         cursor.execute("""
             SELECT COUNT(*) FROM client
-            WHERE (phone_number = %s OR passport_id = %s OR email = %s OR taxpayer_card_id = %s)
+            WHERE (phone_number = %s OR passport_id = %s OR email = %s)
             AND client_id != %s
-        """, (phone_number, passport_id, email, taxpayer_card_id, client_id))
+        """, (phone_number, passport_id, email, client_id))
 
         result = cursor.fetchone()
 
@@ -259,14 +258,14 @@ def update_info():
             sql_client = """
                 UPDATE client 
                 SET surname = %s, name = %s, patronymic = %s, phone_number = %s, 
-                    passport_id = %s, address = %s, email = %s, taxpayer_card_id = %s
+                    passport_id = %s, address = %s, email = %s
                 WHERE client_id = %s
             """
-            cursor.execute(sql_client, (surname, name, patronymic, phone_number, passport_id, address, email, taxpayer_card_id, client_id))
+            cursor.execute(sql_client, (surname, name, patronymic, phone_number, passport_id, address, email, client_id))
 
             mysql.connection.commit()
             flash('Дані успішно оновлено', 'success')
-            return redirect(url_for('client_cabinet'))
+            return redirect(url_for('login'))
         except Exception as e:
             mysql.connection.rollback()
             flash('Упс, сталася помилка', 'error')
