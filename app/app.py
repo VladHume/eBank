@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -15,11 +16,13 @@ mysql = MySQL(app)
 
 @app.route('/')
 def index():
+    session.clear()
     return redirect(url_for('login'))
 
 
 @app.route('/login')
 def login():
+    session.clear()
     return render_template('index.html')
 
 
@@ -74,7 +77,7 @@ def add_client():
             cursor.execute(sql_client, values_client)
 
             mysql.connection.commit()
-            return redirect(url_for('creating_account_screen'))
+            return redirect(url_for('login'))
         except Exception as e:
             mysql.connection.rollback()
             flash('Упс, сталася помилка', 'error')
@@ -102,16 +105,106 @@ def login_user():
         cursor = mysql.connection.cursor()
         cursor.execute("SELECT * FROM users WHERE login = %s", (login,))
         user = cursor.fetchone()
-        cursor.close()
-
+        session.clear()
         if user and user[1] == password:
-            return render_template('home_screen.html', user=user)
+            session['user_id'] = user[0]
+
+            cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user[0],))
+            client = cursor.fetchone()
+
+            if client:
+                client_id = client[0]
+                cursor.execute("SELECT * FROM account WHERE client_id = %s", (client_id,))
+                account = cursor.fetchone()
+
+                if account:
+                    return redirect(url_for('home_screen'))
+                else:
+                    flash('Акаунт не знайдено, перейдіть до створення.', 'warning')
+                    return redirect(url_for('creating_account_screen'))
+            else:
+                flash('Клієнт не знайдений.', 'error')
+                return redirect(url_for('add_client'))
         else:
             flash('Невірний логін або пароль', 'error')
             return redirect(url_for('index'))
+
+
+@app.route('/create_account', methods=['GET', 'POST'])
+def create_account():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        account_type = request.form.get('account_type')
+        account_limit = request.form.get('account_limit')
+
+        if account_type and account_limit:
+            user_id = session['user_id']
+
+            cursor = mysql.connection.cursor()
+            cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+            client_id = cursor.fetchone()
+
+            if client_id:
+                client_id = client_id[0]
+
+                opening_date = datetime.now()
+
+                status = 'active'
+
+                cursor.execute("""
+                    INSERT INTO account (client_id, account_type, opening_date, account_limit, status)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (client_id, account_type, opening_date, account_limit, status))
+
+                mysql.connection.commit()
+                cursor.close()
+
+                return redirect(url_for('home_screen'))
+            else:
+                flash('Client not found for the given user ID.', 'error')
+                return redirect(url_for('create_account'))
+        else:
+            flash('Будь ласка, заповніть всі поля', 'error')
+            return redirect(url_for('create_account'))
+
+    return render_template('create_account_screen.html')
+
+
+@app.route('/home_screen')
+def home_screen():
+    return render_template('home_screen.html')
+
+
+@app.route('/client_cabinet')
+def client_cabinet():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash('Будь ласка, увійдіть до свого акаунту', 'error')
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("""
+        SELECT surname, name, patronymic, phone_number, email, passport_id, address, taxpayer_card_id
+        FROM client WHERE user_id = %s
+    """, (user_id,))
+
+    client = cursor.fetchone()
+    cursor.close()
+
+    if client:
+        return render_template('client_cabinet.html', client=client)
+
+    flash('Клієнт не знайдений', 'error')
     return redirect(url_for('index'))
 
-
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -13,16 +13,16 @@
     </header>
     <div class="container">
 
-            <form class="login-form"  action="home_screen.html" method="get">
+            <form class="login-form"  action="create_account" method="POST">
                 <label for="account_type">Тип акаунту</label>
             <select id="account_type" name="account_type">
                 <option value="">Оберіть тип акаунту</option>
-                <option value="individual">Для приватних осіб</option>
-                <option value="business">Для бізнесу (ФОП)</option>
+                <option value="1">Для приватних осіб</option>
+                <option value="2">Для бізнесу (ФОП)</option>
             </select>
 
-            <label for="card_limit">Ліміт акаунту</label>
-            <input type="text" id="card_limit" name="card_limit" placeholder="Введіть ліміт">
+            <label for="account_limit">Ліміт акаунту</label>
+            <input type="text" id="account_limit" name="account_limit" placeholder="Введіть ліміт">
                 <button type="submit" class="submit-button">Продовжити</button>
             </form>
         </main>

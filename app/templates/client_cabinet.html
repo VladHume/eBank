@@ -22,42 +22,35 @@
         <div class="profile-header">
             <img src="..\static\icons\user.png" alt="Фото користувача" class="profile-image">
             <div class="profile-info">
-                <h2 class="profile-name">Петрик Петро Петрович</h2>
-                <p class="profile-phone">+380 (000) 000 00 00</p>
+                <h2 class="profile-name">{{ client[0] }} {{ client[1] }} {{ client[2] }}</h2>
+                <p class="profile-phone">+38 {{ client[3] }}</p>
             </div>
         </div>
-        
-        
+
+
         <main class="account-details">
           <div class="detail-row">
             <span class="label">Номер паспорту</span>
-            <span class="value">004856248</span>
+            <span class="value">{{ client[5] }}</span>
           </div>
           <div class="detail-row">
             <span class="label">Адреса проживання</span>
-            <span class="value">м. Київ, ЖК Taryan Tower</span>
+            <span class="value">{{ client[6] }}</span>
           </div>
           <div class="detail-row">
             <span class="label">Електронна пошта</span>
-            <span class="value">gagarin.info@ukr.net</span>
+            <span class="value">{{ client[4] }}</span>
           </div>
           <div class="detail-row">
             <span class="label">РНОКПП</span>
-            <span class="value">3880908006</span>
+            <span class="value">{{ client[7] }}</span>
           </div>
         </main>
         <div class="buttons-row">
-          <button class="exit-button" title="Вихід з аккаунту" onclick="window.location.href='index.html';"></button>
+          <button class="exit-button" title="Вихід з акаунту" onclick="location.href='{{ url_for('logout') }}'; return false;"></button>
           <button class="update-button" title="Оновити дані" onclick="window.location.href='update_account_info.html';"></button>
-      </div>
-      
-        
-       
-      </div>
-    
-   
-    
-    
-    
+        </div>
+    </div>
+
 </body>
 </html>

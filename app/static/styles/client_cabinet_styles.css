@@ -193,6 +193,7 @@ body {
 }
 
 .exit-button {
+    background-color: #ffffff;
     background-image: url("../icons/exit.png");
 }
 
