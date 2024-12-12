@@ -193,9 +193,9 @@ body {
 }
 
 .exit-button {
-    background-image: url("C:/Users/User/Desktop/КУРСОВА БДСМ/Front/icons/exit.png");
+    background-image: url("../icons/exit.png");
 }
 
 .update-button {
-    background-image: url("C:/Users/User/Desktop/КУРСОВА БДСМ/Front/icons/update_info.png");
+    background-image: url("../icons/update_info.png");
 }

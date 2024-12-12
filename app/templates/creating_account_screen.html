@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>еБАНК - Банк твоїх можливостей</title>
-    <link rel="stylesheet" href="styles\creating_account_styles.css">
+    <link rel="stylesheet" href="..\static\styles\creating_account_styles.css">
 </head>
 <body>
     <header class="header">
-        <img src="icons\logo.png" alt="Логотип банку" class="logo">
+        <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
         <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
     </header>
     <div class="container">
-               
+
             <form class="login-form"  action="home_screen.html" method="get">
                 <label for="account_type">Тип акаунту</label>
             <select id="account_type" name="account_type">
@@ -21,20 +21,8 @@
                 <option value="business">Для бізнесу (ФОП)</option>
             </select>
 
-            <label for="card_type">Тип картки</label>
-            <select id="card_type" name="card_type">
-                <option value="">Оберіть тип картки</option>
-                <option value="credit">Кредитна</option>
-                <option value="debit">Дебетова</option>
-            </select>
-
-            <label for="payment_system">Платіжна система</label>
-            <select id="payment_system" name="payment_system">
-                <option value="">Оберіть платіжну систему</option>
-                <option value="visa">Visa</option>
-                <option value="mastercard">Mastercard</option>
-            </select>
-
+            <label for="card_limit">Ліміт акаунту</label>
+            <input type="text" id="card_limit" name="card_limit" placeholder="Введіть ліміт">
                 <button type="submit" class="submit-button">Продовжити</button>
             </form>
         </main>

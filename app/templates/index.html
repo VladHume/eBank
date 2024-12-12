@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\index_styles.css">
+    <script>
+        function validateForm() {
+            var login = document.getElementById("login").value.trim();
+            var password = document.getElementById("password").value.trim();
+
+            if (login === "" || password === "") {
+                alert("Будь ласка, заповніть усі поля.");
+                return false;
+            }
+            var phoneRegex = /^(?:\+380|0)\d{9}$/;
+
+            if (!phoneRegex.test(login)) {
+                alert("Логін повинен бути номером телефону у форматі +380XXXXXXXXX або 0XXXXXXXXX.");
+                return false;
+            }
+
+            if (password.length < 10) {
+                alert("Пароль повинен бути мінімум з 10 символів")
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
+        <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
+    </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <div class="container">
+        <main class="form-container">
+            <div class="tabs">
+                <button class="active">Вхід</button>
+                <a href="{{ url_for('register') }}" class="tab-link">Реєстрація</a>  <!-- Перехід на сторінку реєстрації -->
+            </div>
+            <form class="login-form" action="{{ url_for('login_user') }}" method="POST" onsubmit="return validateForm()">
+                <label for="login">Логін</label>
+                <input type="text" id="login" name="login" placeholder="Введіть логін">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Введіть пароль">
+                <button type="submit">Продовжити</button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>

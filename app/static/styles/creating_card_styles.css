@@ -97,43 +97,6 @@ body {
     transition: border-color 0.3s, color 0.3s;
 }
 
-.tab-link-fields {
-    text-decoration: none;
-    font-size: 20px;
-    text-align: right;
-    font-weight: bold;
-    color: #ffffff;
-    margin: 0 10px;
-    padding: 5px 10px;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: border-color 0.3s, color 0.3s;
-}
-
-.tab-link-fields-icon{
-    height: 35px;
-    width: 35px;
-    margin: 0 10px;
-    padding: 5px 10px;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    transition: border-color 0.3s, color 0.3s;
-}
-
-.tab-link-fields-icon:hover{
-    border-bottom: 2px solid #ffffff;
-}
-
-.menu {
-    width: 100%;
-    display: flex; /* Вирівнює елементи в один рядок */
-    justify-content: flex-end; /* Розташовує блок справа */
-    align-items: center; /* Вирівнює елементи по вертикалі */
-}
-
-.tab-link-fields:hover {
-    border-bottom: 2px solid #ffffff;
-}
 
 .tab-link:hover {
     border-bottom: 2px solid #4CAF50;
@@ -142,40 +105,42 @@ body {
 
 .login-form label {
     display: block;
-    text-align: left;
-    margin-bottom: 5px;
-    font-size: 14px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 16px;
 }
 
-.login-form input {
+.login-form select {
     width: 100%;
     padding: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+    border-radius: 4px;
 }
 
-.login-form button {
+.login-form input[type="text"] {
     width: 100%;
     padding: 10px;
     font-size: 16px;
-    background-color: #4CAF50;
-    color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-sizing: border-box; 
+}
+
+.submit-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    color: white;
+    background-color: #28a745;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
 }
 
-.login-form button:hover {
-    background-color: #45a049;
-}
 
-.white_text {
-    color: #ffffff
-}
 
 
 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\creating_card_styles.css">
+</head>
+<body>
+    <header class="header">
+        <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
+        <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
+    </header>
+    <div class="container">
+               
+            <form class="login-form"  action="home_screen.html" method="get">
+                <label for="card_type">Тип картки</label>
+                <select id="card_type" name="card_type">
+                    <option value="">Оберіть тип картки</option>
+                    <option value="credit">Кредитна</option>
+                    <option value="debit">Дебетова</option>
+                </select>
+    
+                <label for="payment_system">Платіжна система</label>
+                <select id="payment_system" name="payment_system">
+                    <option value="">Оберіть платіжну систему</option>
+                    <option value="visa">Visa</option>
+                    <option value="mastercard">Mastercard</option>
+                </select>
+
+                <label for="currency">Валюта</label>
+                <select id="currency" name="currency">
+                    <option value="">Оберіть валюту</option>
+                    <option value="UAH">UAH</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+
+                <label for="PIN">Ліміт акаунту</label>
+                <input type="text" id="PIN" name="PIN" placeholder="Введіть ПІН-код для нової картки">
+    
+
+
+
+           
+
+                <button type="submit" class="submit-button">Продовжити</button>
+            </form>
+        </main>
+    </div>
+    
+    
+</body>
+</html>
