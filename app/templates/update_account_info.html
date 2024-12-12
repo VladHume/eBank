@@ -22,7 +22,7 @@
     <div class="container">
         <main class="form-container">
            
-            <form class="login-form" action="client_cabinet.html" method="get">
+            <form class="login-form" action="{{ url_for('update_info') }}" method="POST">
                 <label for="surname">Прізвище</label>
                 <input type="text" id="surname" name="surname" placeholder="Введіть прізвище">
 

@@ -48,7 +48,7 @@
         </main>
         <div class="buttons-row">
           <button class="exit-button" title="Вихід з акаунту" onclick="location.href='{{ url_for('logout') }}'; return false;"></button>
-          <button class="update-button" title="Оновити дані" onclick="window.location.href='update_account_info.html';"></button>
+          <button class="update-button" title="Оновити дані" onclick="location.href='{{ url_for('update_info') }}'; return false"></button>
         </div>
     </div>
 

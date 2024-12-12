@@ -206,5 +206,77 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/update_info', methods=['GET', 'POST'])
+def update_info():
+    if 'user_id' not in session:
+        flash('Будь ласка, увійдіть у систему', 'error')
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    if request.method == 'POST':
+        surname = request.form['surname']
+        name = request.form['name']
+        patronymic = request.form['patronymic']
+        phone_number = request.form['phone number'].lstrip('+38')
+        password = request.form['password']
+        passport_id = request.form['passport id']
+        address = request.form['address']
+        email = request.form['email']
+        taxpayer_card_id = request.form.get('taxpayer card id')
+
+        cursor = mysql.connection.cursor()
+
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+
+        if not client:
+            flash('Клієнт не знайдений', 'error')
+            return redirect(url_for('update_info'))
+
+        client_id = client[0]
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM client
+            WHERE (phone_number = %s OR passport_id = %s OR email = %s OR taxpayer_card_id = %s)
+            AND client_id != %s
+        """, (phone_number, passport_id, email, taxpayer_card_id, client_id))
+
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            flash('Помилка: Номер телефону, паспорт, email або ідентифікаційний код вже існують у системі', 'error')
+            return redirect(url_for('update_info'))
+
+        try:
+            sql_users = """
+                UPDATE users 
+                SET password = %s, login = %s
+                WHERE user_id = %s
+            """
+            cursor.execute(sql_users, (password, phone_number, user_id))
+
+            sql_client = """
+                UPDATE client 
+                SET surname = %s, name = %s, patronymic = %s, phone_number = %s, 
+                    passport_id = %s, address = %s, email = %s, taxpayer_card_id = %s
+                WHERE client_id = %s
+            """
+            cursor.execute(sql_client, (surname, name, patronymic, phone_number, passport_id, address, email, taxpayer_card_id, client_id))
+
+            mysql.connection.commit()
+            flash('Дані успішно оновлено', 'success')
+            return redirect(url_for('client_cabinet'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash('Упс, сталася помилка', 'error')
+            return redirect(url_for('update_info'))
+        finally:
+            cursor.close()
+
+    return render_template('update_account_info.html')
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
