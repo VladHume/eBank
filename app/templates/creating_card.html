@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>еБАНК - Банк твоїх можливостей</title>
     <link rel="stylesheet" href="..\static\styles\creating_card_styles.css">
+    <script>
+        function validateForm() {
+            var cardType = document.getElementById("card_type").value;
+            var paymentSystem = document.getElementById("payment_system").value;
+            var currency = document.getElementById("currency").value;
+            var pin = document.getElementById("PIN").value;
+
+            // Перевірка, чи всі поля заповнені і чи не вибрані дефолтні значення
+            if (cardType === "" || paymentSystem === "" || currency === "" || pin === "") {
+                alert("Будь ласка, заповніть всі поля і оберіть значення, відмінне від дефолтного.");
+                return false;
+            }
+
+            // Перевірка, чи ПІН складається тільки з 4 цифр
+            var pinPattern = /^\d{4}$/;
+            if (!pinPattern.test(pin)) {
+                alert("ПІН має складатися лише з 4 цифр.");
+                return false;
+            }
+
+            return true;  // Якщо всі перевірки пройдені
+        }
+    </script>
 </head>
 <body>
     <header class="header">
@@ -12,43 +35,36 @@
         <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
     </header>
     <div class="container">
-               
-            <form class="login-form"  action="home_screen.html" method="get">
-                <label for="card_type">Тип картки</label>
-                <select id="card_type" name="card_type">
-                    <option value="">Оберіть тип картки</option>
-                    <option value="credit">Кредитна</option>
-                    <option value="debit">Дебетова</option>
-                </select>
-    
-                <label for="payment_system">Платіжна система</label>
-                <select id="payment_system" name="payment_system">
-                    <option value="">Оберіть платіжну систему</option>
-                    <option value="visa">Visa</option>
-                    <option value="mastercard">Mastercard</option>
-                </select>
+        <form class="login-form" action="{{creating_card}}" method="POST" onsubmit="return validateForm()">
+            <label for="card_type">Тип картки</label>
+            <select id="card_type" name="card_type" required>
+                <option value="">Оберіть тип картки</option>
+                {% for type in card_types %}
+                    <option value="{{ type[0] }}">{{ type[1] }}</option>
+                {% endfor %}
+            </select>
 
-                <label for="currency">Валюта</label>
-                <select id="currency" name="currency">
-                    <option value="">Оберіть валюту</option>
-                    <option value="UAH">UAH</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                </select>
+            <label for="payment_system">Платіжна система</label>
+            <select id="payment_system" name="payment_system" required>
+                <option value="">Оберіть платіжну систему</option>
+                {% for system in payment_systems %}
+                    <option value="{{ system[0] }}">{{ system[1] }}</option>
+                {% endfor %}
+            </select>
 
-                <label for="PIN">Ліміт акаунту</label>
-                <input type="text" id="PIN" name="PIN" placeholder="Введіть ПІН-код для нової картки">
-    
+            <label for="currency">Валюта</label>
+            <select id="currency" name="currency" required>
+                <option value="">Оберіть валюту</option>
+                {% for currency in currencies %}
+                    <option value="{{ currency[0] }}">{{ currency[1] }}</option>
+                {% endfor %}
+            </select>
 
+            <label for="PIN">PIN</label>
+            <input type="text" id="PIN" name="PIN" placeholder="Введіть ПІН-код для нової картки" maxlength="4" required>
 
-
-           
-
-                <button type="submit" class="submit-button">Продовжити</button>
-            </form>
-        </main>
+            <button type="submit" class="submit-button">Продовжити</button>
+        </form>
     </div>
-    
-    
 </body>
 </html>

@@ -5,24 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>еБАНК - Банк твоїх можливостей</title>
     <link rel="stylesheet" href="..\static\styles\update_info_styles.css">
+    <script>
+        function validateForm() {
+            var surname = document.getElementById("surname").value.trim();
+            var name = document.getElementById("name").value.trim();
+            var patronymic = document.getElementById("patronymic").value.trim();
+            var email = document.getElementById("email").value.trim();
+            var phone = document.getElementById("phone number").value.trim();
+            var password = document.getElementById("password").value.trim();
+            var passport = document.getElementById("passport id").value.trim();
+            var address = document.getElementById("address").value.trim();
+
+            var nameRegex = /^[А-Яа-яІіЇїЄєҐґ]+$/;
+
+            if (!nameRegex.test(surname)) {
+                alert("Прізвище повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!nameRegex.test(name)) {
+                alert("Ім'я повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!nameRegex.test(patronymic)) {
+                alert("По батькові повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!surname || !name || !patronymic || !email || !phone || !password || !passport || !address) {
+                alert("Будь ласка, заповніть усі поля.");
+                return false;
+            }
+
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Введіть коректну електронну пошту.");
+                return false;
+            }
+
+            var phoneRegex = /^(?:\+380|0)\d{9}$/;
+            if (!phoneRegex.test(phone)) {
+                alert("Номер телефону повинен бути у форматі +380XXXXXXXXX або 0XXXXXXXXX.");
+                return false;
+            }
+
+            if (password.length < 10) {
+                alert("Пароль повинен бути мінімум з 10 символів.");
+                return false;
+            }
+
+            var passportRegex = /^([A-ZА-ЯІЇЄ]{2}\d{6}|\d{9})$/;
+            if (!passportRegex.test(passport)) {
+                alert("Номер паспорта повинен бути у форматі: 2 літери та 6 цифр або 9 цифр.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </head>
 <header class="header">
     <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</a></h1>
+    <h1> <a href="{{ url_for('home_screen') }}" class="ebank-field">еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</a></h1>
     <div class="menu">
         <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
         <a href="deposits.html" class="tab-link-fields">депозит</a>
         <a href="credit_history.html" class="tab-link-fields">кредит</a>
         <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
-        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
 <body>
     <div class="container">
         <main class="form-container">
            
-            <form class="login-form" action="{{ url_for('update_info') }}" method="POST">
+            <form class="login-form" action="{{ url_for('update_info') }}" method="POST" onsubmit="return validateForm()">
                 <label for="surname">Прізвище</label>
                 <input type="text" id="surname" name="surname" placeholder="Введіть прізвище">
 

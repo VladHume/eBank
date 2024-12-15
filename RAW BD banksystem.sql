@@ -34,8 +34,11 @@ CREATE TABLE account (
 CREATE TABLE card_account(
 	card_account_id	INT NOT NULL AUTO_INCREMENT,
 	account_id		INT,
-	credit_number 	INT,
+	credit_number 	VARCHAR(16),
 	card_type	INT,
+    payment_system_id INT,
+	sum INT,
+	my_money INT,
 	exporation_date DATETIME,
 	cvv_code VARCHAR(3),
 	credit_limit INT,
@@ -82,9 +85,7 @@ CREATE TABLE business(
 	account_id INT,
 	balance INT,
 	business_name VARCHAR(50),
-	tax_number INT,
 	account_manager_id INT,
-    UNIQUE (tax_number),
 	PRIMARY KEY(business_id)
 );
 
@@ -107,6 +108,7 @@ CREATE TABLE quarantors(
 
 CREATE TABLE credit(
 	credit_id  INT NOT NULL AUTO_INCREMENT,
+	client_id INT,
 	sum INT,
 	payment_day	DATETIME,
 	interest_rate VARCHAR(50), -- не зрозуміло який тип для стовпця
@@ -118,7 +120,7 @@ CREATE TABLE credit(
 
 CREATE TABLE credit_history(
 	credit_history_id INT NOT NULL AUTO_INCREMENT,
-	card_account_id	INT,
+	client_id	INT,
     credit_id	INT,
     payment_day	DATETIME,
 	amount_repaid INT,
@@ -128,6 +130,7 @@ CREATE TABLE credit_history(
 CREATE TABLE credit_limit_history(
 	limit_id INT NOT NULL AUTO_INCREMENT,
 	limit_amount INT,
+	card_account_id INT,
 	change_date DATETIME,
 	reason TEXT,
 	PRIMARY KEY(limit_id)
@@ -142,13 +145,13 @@ CREATE TABLE card_types(
 
 CREATE TABLE deposits(
 	deposit_id INT NOT NULL AUTO_INCREMENT,
-	card_account_id INT,
+	client_id INT,
 	account INT,
 	opening_date DATETIME,
 	closing_date DATETIME,
-	interest_rate VARCHAR(50), 
+	interest_rate VARCHAR(50),
 	status VARCHAR(50),
-	currency INT, 
+	currency INT,
 	PRIMARY KEY(deposit_id)
 );
 
@@ -165,7 +168,7 @@ CREATE TABLE notification(
 	user_id INT,
 	message TEXT,
 	date_sent DATETIME,
-	is_read BOOLEAN,
+	notification_type INT,
 	PRIMARY KEY(notification_id)
 );
 
@@ -196,8 +199,6 @@ ADD CONSTRAINT FK_CAccountAccount FOREIGN KEY (account_id) REFERENCES account (a
 ALTER TABLE card_account
 ADD CONSTRAINT FK_CAccountCType FOREIGN KEY (card_type) REFERENCES card_types (card_type_id);
 ALTER TABLE card_account
-ADD CONSTRAINT FK_CAccountCLimit FOREIGN KEY (credit_limit) REFERENCES credit_limit_history (limit_id);
-ALTER TABLE card_account
 ADD CONSTRAINT FK_CAccountCurrency FOREIGN KEY (curr_id )REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
 
 -- client
@@ -210,18 +211,22 @@ ALTER TABLE credit
 ADD CONSTRAINT FK_CreditGuarantor FOREIGN KEY (quarantor_id) REFERENCES quarantors (quarantor_id)  ON DELETE SET NULL;
 ALTER TABLE credit
 ADD CONSTRAINT FK_CreditCurrency FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
+ALTER TABLE credit
+ADD CONSTRAINT FK_CreditClient FOREIGN KEY (client_id) REFERENCES client (client_id); -- ON DELETE SET NULL;
 
 -- credit_history
 ALTER TABLE credit_history
-ADD CONSTRAINT FK_CreditHCardAcc FOREIGN KEY (card_account_id) REFERENCES card_account (card_account_id)  ON DELETE CASCADE;
+ADD CONSTRAINT FK_CreditHClient FOREIGN KEY (client_id) REFERENCES client (client_id)  ON DELETE CASCADE;
 ALTER TABLE credit_history
 ADD CONSTRAINT FK_CreditHCredit FOREIGN KEY (credit_id) REFERENCES credit (credit_id) ON DELETE CASCADE;
 
-
+-- credit_limit_history
+ALTER TABLE credit_limit_history
+ADD CONSTRAINT FK_CreditLHCAccount FOREIGN KEY (card_account_id) REFERENCES card_account (card_account_id)  ON DELETE CASCADE;
 
 -- deposits
 ALTER TABLE deposits
-ADD CONSTRAINT FK_DepoisitsCard FOREIGN KEY (card_account_id) REFERENCES card_account (card_account_id) ON DELETE CASCADE;
+ADD CONSTRAINT FK_DepoisitsCard FOREIGN KEY (client_id) REFERENCES client (client_id) ON DELETE CASCADE;
 ALTER TABLE deposits
 ADD CONSTRAINT FK_DepoisitsCurr FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
 
@@ -231,7 +236,7 @@ ADD CONSTRAINT FK_DepoisitsCurr FOREIGN KEY (currency) REFERENCES currency_conve
 ALTER TABLE notification
 ADD CONSTRAINT FK_NotifUser FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE;
 ALTER TABLE notification
-ADD CONSTRAINT FK_NotifNotifType FOREIGN KEY (notification_id) REFERENCES notification_type (notification_type_id) ON DELETE CASCADE;
+ADD CONSTRAINT FK_NotifNotifType FOREIGN KEY (notification_type) REFERENCES notification_type (notification_type_id) ON DELETE CASCADE;
 
 -- private
 ALTER TABLE private
@@ -253,3 +258,23 @@ ADD CONSTRAINT FK_TransPaySys FOREIGN KEY (payment_system_id) REFERENCES payment
 ALTER TABLE transaction
 ADD CONSTRAINT FK_TransCurr FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL; 
 
+INSERT INTO card_types (type)
+VALUES
+    ('Дебетова'),
+    ('Кредитна');
+
+INSERT INTO payment_systems (`name`)
+VALUES
+    ('Visa'),
+    ('MasterCard');
+
+INSERT INTO currency_conversion (`name`, buying_rate, sales_rate)
+VALUES
+    ('UAH', 1, 1),
+    ('USD', 27, 28),
+    ('EUR', 30, 31);
+
+INSERT INTO account_types (type)
+VALUES
+    ('Приватний'),
+    ('Бізнес');

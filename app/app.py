@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from datetime import datetime
+import random
 
 app = Flask(__name__)
 
@@ -13,23 +14,19 @@ app.config['MYSQL_DB'] = 'banksystem'
 
 mysql = MySQL(app)
 
-
 @app.route('/')
 def index():
     session.clear()
     return redirect(url_for('login'))
-
 
 @app.route('/login')
 def login():
     session.clear()
     return render_template('index.html')
 
-
 @app.route('/register')
 def register():
     return render_template('register.html')
-
 
 @app.route('/add_client', methods=['GET', 'POST'])
 def add_client():
@@ -87,11 +84,13 @@ def add_client():
 
     return render_template('register.html')
 
-
 @app.route('/creating_account_screen')
 def creating_account_screen():
-    return render_template('creating_account_screen.html')
-
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT account_type_id, type FROM account_types")
+    account_types = cursor.fetchall()
+    cursor.close()
+    return render_template('creating_account_screen.html', account_types=account_types)
 
 @app.route('/login_user', methods=['GET', 'POST'])
 def login_user():
@@ -128,7 +127,6 @@ def login_user():
         else:
             flash('Невірний логін або пароль', 'error')
             return redirect(url_for('index'))
-
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
@@ -169,12 +167,69 @@ def create_account():
             flash('Будь ласка, заповніть всі поля', 'error')
             return redirect(url_for('create_account'))
 
-    return render_template('create_account_screen.html')
-
+    return render_template('creating_account_screen.html')
 
 @app.route('/home_screen')
 def home_screen():
-    return render_template('home_screen.html')
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Отримання client_id з таблиці client
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            return "Клієнт не знайдений", 404
+
+        client_id = client[0]
+
+        # Отримання акаунтів типу 1 з таблиці account
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
+        accounts = cursor.fetchall()
+
+        if not accounts:
+            return "Акаунти не знайдені", 404
+
+        account_ids = [account[0] for account in accounts]
+
+        # Отримання інформації про карткові акаунти з таблиці card_account
+        cursor.execute("""
+                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                FROM card_account WHERE account_id IN %s
+            """, (tuple(account_ids),))
+        cards = cursor.fetchall()
+
+        if not cards:
+            return redirect(url_for('creating_card'))
+
+        card_list = []
+        for card in cards:
+            card_info = {
+                "card_account_id": card[0],
+                "credit_number": card[1],
+                "my_money": card[2],
+                "sum": card[3],
+                "credit_limit": card[4],
+                "exporation_date": card[5],
+                "cvv_code": card[6]
+            }
+
+            # Отримання типу картки за card_type_id
+            cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
+            card_type = cursor.fetchone()
+            if card_type:
+                card_info["card_type"] = card_type[0]
+            else:
+                card_info["card_type"] = "Невідомий тип"
+
+            card_list.append(card_info)
+
+        return render_template('home_screen.html', cards=card_list)
+    except Exception as e:
+        return f"Помилка: {e}", 500
 
 
 @app.route('/client_cabinet')
@@ -275,6 +330,184 @@ def update_info():
 
     return render_template('update_account_info.html')
 
+@app.route('/card_info')
+def card_info():
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Отримання client_id з таблиці client
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            return "Клієнт не знайдений", 404
+
+        client_id = client[0]
+
+        # Отримання акаунтів типу 1 з таблиці account
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
+        accounts = cursor.fetchall()
+
+        if not accounts:
+            return "Акаунти не знайдені", 404
+
+        account_ids = [account[0] for account in accounts]
+
+        # Отримання інформації про карткові акаунти з таблиці card_account
+        cursor.execute("""
+                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                FROM card_account WHERE account_id IN %s
+            """, (tuple(account_ids),))
+        cards = cursor.fetchall()
+
+        if not cards:
+            return redirect(url_for('creating_card'))
+
+        card_list = []
+        for card in cards:
+            card_info = {
+                "card_account_id": card[0],
+                "credit_number": card[1],
+                "my_money": card[2],
+                "sum": card[3],
+                "credit_limit": card[4],
+                "exporation_date": card[5],
+                "cvv_code": card[6]
+            }
+
+            # Отримання типу картки за card_type_id
+            cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
+            card_type = cursor.fetchone()
+            if card_type:
+                card_info["card_type"] = card_type[0]
+            else:
+                card_info["card_type"] = "Невідомий тип"  # Якщо тип не знайдено
+
+            card_list.append(card_info)
+
+        return render_template('card_info.html', cards=card_list)
+    except Exception as e:
+        return f"Помилка: {e}", 500
+
+def generate_credit_card(payment_system):
+    # Перші цифри визначаються платіжною системою
+    prefix = '4' if payment_system == 1 else '5'
+    # Генеруємо номер картки (16 цифр)
+    credit_number = prefix + ''.join(str(random.randint(0, 9)) for _ in range(15))
+    # Генеруємо CVV (3 цифри)
+    cvv = ''.join(str(random.randint(0, 9)) for _ in range(3))
+    return credit_number, cvv
+
+def generate_unique_credit_card(cursor, payment_system):
+    while True:
+        # Генерація номера картки та CVV
+        card_number, cvv = generate_credit_card(payment_system)
+
+        # Перевірка унікальності номера картки в БД
+        cursor.execute("SELECT COUNT(*) FROM card_account WHERE credit_number = %s", (card_number,))
+        if cursor.fetchone()[0] == 0:
+            return card_number, cvv
+
+@app.route('/creating_card', methods=['GET', 'POST'])
+def creating_card():
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    if request.method == 'POST':
+        card_type = int(request.form['card_type'])  # Тип картки: 1 - дебетова, 2 - кредитна
+        payment_system = int(request.form['payment_system'])  # 1 - VISA, 2 - MasterCard
+        currency = int(request.form['currency'])  # Валюта (curr_id)
+        pin = request.form['PIN']  # PIN-код
+
+        cursor = mysql.connection.cursor()
+
+        # Генерація унікального номера картки та CVV
+        credit_number, cvv_code = generate_unique_credit_card(cursor, payment_system)
+
+        # Встановлення кредитного ліміту залежно від типу картки
+        credit_limit = 0 if card_type == 1 else 20000
+
+        # Отримання client_id
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client_id = cursor.fetchone()
+        if not client_id:
+            return "Клієнт не знайдений", 404
+
+        # Отримання account_id
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id[0],))
+        account_id = cursor.fetchone()
+        if not account_id:
+            return "Акаунт не знайдений", 404
+
+        # Додавання запису в card_account
+        cursor.execute("""
+            INSERT INTO card_account (
+                account_id, card_type, payment_system_id, sum, my_money, exporation_date, cvv_code, credit_limit, curr_id, pin, credit_number
+            )
+            VALUES (%s, %s, %s, %s, %s, NOW() + INTERVAL 3 YEAR, %s, %s, %s, %s, %s)
+        """, (account_id[0], card_type, payment_system, 0, 0, cvv_code, credit_limit, currency, pin, credit_number))
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return redirect(url_for('home_screen'))
+
+    # Якщо GET-запит, отримуємо дані для вибору типів карток, платіжних систем і валют
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("SELECT * FROM card_types")
+    card_types = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM payment_systems")
+    payment_systems = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM currency_conversion")
+    currencies = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template(
+        'creating_card.html',
+        card_types=card_types,
+        payment_systems=payment_systems,
+        currencies=currencies
+    )
+
+@app.route('/delete_card/<int:card_id>', methods=['POST'])
+def delete_card(card_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Перевіряємо, чи картка належить поточному користувачеві
+        cursor.execute("""
+            SELECT ca.card_account_id 
+            FROM card_account ca 
+            JOIN account a ON ca.account_id = a.account_id 
+            JOIN client c ON a.client_id = c.client_id 
+            WHERE ca.card_account_id = %s AND c.user_id = %s
+        """, (card_id, user_id))
+        card = cursor.fetchone()
+
+        if not card:
+            return "Картку не знайдено або вона не належить користувачеві", 404
+
+        # Видаляємо картку
+        cursor.execute("DELETE FROM card_account WHERE card_account_id = %s", (card_id,))
+        mysql.connection.commit()
+
+        return "Картку успішно закрито", 200
+    except Exception as e:
+        return f"Помилка при видаленні картки: {e}", 500
+    finally:
+        cursor.close()
 
 
 if __name__ == '__main__':

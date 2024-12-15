@@ -21,7 +21,7 @@
 <body>
     <div class="title-container">
         <h2 class="my_wallet">Мій гаманець </h2>
-        <a href="card_info.html"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
+        <a href="{{ url_for('card_info') }}"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
 
         <h2 class="my_transactions">Мої транзакції </h2>
         <a href="transactions.html"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
@@ -29,23 +29,27 @@
     </div>
 
     <div class="main_container">
-        <div class="vidget1">
-            <div class="card-container">
-                <div class="card">
-                    <p class="bank_name">єБанк</p>
-                    <p class="card_number">4441 1110 4330 0049</p>
-                </div>
-                <p class="text">Карта універсальна <br>14898.58 грн</p>
+        {% if cards|length == 0 %}
+            <div class="vidget1">
+                <p>У вас немає карток. Будь ласка, додайте картку для використання цього функціоналу.</p>
             </div>
-    
-        </div>
-    
+        {% else %}
+            <div class="vidget1">
+                <div class="card-container">
+                    <div class="card">
+                        <p class="bank_name">єБанк</p>
+                        <p class="card_number" id="card_number">{{ cards[0].credit_number }}</p> <!-- Виводимо номер тільки першої картки -->
+                    </div>
+                    <p class="text">Карта типу {{ cards[0].card_type }}<br>{{ cards[0].my_money }} грн</p> <!-- Інформація про першу картку -->
+                </div>
+            </div>
+        {% endif %}
+
         <div class="vidget1">
             <p class="text">Сповіщення дата сума </p>
             <p class="text">Сповіщення дата сума</p>
-    
         </div>
-        
+
     </div>
 
     <div class="title-container">
@@ -60,20 +64,16 @@
     <div class="main_container">
         <div class="vidget2">
             <div class="transfer-container">
-                <input type="text" placeholder="0000 0000 0000 0000">                
+                <input type="text" placeholder="0000 0000 0000 0000">
                 <img src="..\static\icons\debit_card.png" alt="Дебетова картка" class="card-icon" />
             </div>
 
             <div class="card-sum-container">
-                <input type="text" placeholder="Сума переказу">                
+                <input type="text" placeholder="Сума переказу">
                 <img src="..\static\icons\dollar.png" alt="Долар" class="dollar-icon" />
             </div>
-
-           
-            
-    
         </div>
-    
+
         <div class="vidget2">
             <div class="refill-phone-container">
                 <input type="text" placeholder="+(380) 000 00 00 00">
@@ -81,19 +81,26 @@
             </div>
 
             <div class="phone-sum-container">
-                <input type="text" placeholder="Сума переказу">                
+                <input type="text" placeholder="Сума переказу">
                 <img src="..\static\icons\dollar.png" alt="Долар" class="dollar-icon" />
-
             </div>
-                
-            </div>
-           
         </div>
-        
     </div>
-    
-    
-    
-    
+
+    <script>
+        // Функція для форматування номеру картки
+        function formatCardNumber(cardNumber) {
+            return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        // Форматуємо номери карток при завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardNumbers = document.querySelectorAll('.card_number');
+            cardNumbers.forEach(function(cardNumberElement) {
+                let cardNumber = cardNumberElement.innerText;
+                cardNumberElement.innerText = formatCardNumber(cardNumber);
+            });
+        });
+    </script>
 </body>
 </html>

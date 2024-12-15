@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>еБАНК - Банк твоїх можливостей</title>
     <link rel="stylesheet" href="..\static\styles\creating_account_styles.css">
+    <script>
+        function validateForm() {
+            const accountType = document.getElementById('account_type').value;
+            const accountLimit = parseFloat(document.getElementById('account_limit').value);
+
+            if (accountType === "") {
+                alert('Будь ласка, оберіть тип акаунту.');
+                return false;
+            }
+
+            if (accountLimit < 500) {
+                alert('Ліміт не може бути менше 500.');
+                return false;
+            }
+
+            if (accountType === "1" && accountLimit > 10000000) {
+                alert('Для приватних осіб ліміт не може перевищувати 10 000 000.');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </head>
 <body>
     <header class="header">
@@ -12,22 +35,21 @@
         <h1>еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</h1>
     </header>
     <div class="container">
-
-            <form class="login-form"  action="create_account" method="POST">
-                <label for="account_type">Тип акаунту</label>
-            <select id="account_type" name="account_type">
+        <form class="login-form" action="{{ url_for('create_account') }}" method="POST" onsubmit="return validateForm()">
+            <label for="account_type">Тип акаунту</label>
+            <select id="account_type" name="account_type" required>
                 <option value="">Оберіть тип акаунту</option>
-                <option value="1">Для приватних осіб</option>
-                <option value="2">Для бізнесу (ФОП)</option>
+                {% for type in account_types %}
+                    <option value="{{ type[0] }}">{{ type[1] }}</option>
+                {% endfor %}
             </select>
 
+
             <label for="account_limit">Ліміт акаунту</label>
-            <input type="text" id="account_limit" name="account_limit" placeholder="Введіть ліміт">
-                <button type="submit" class="submit-button">Продовжити</button>
-            </form>
-        </main>
+            <input type="text" id="account_limit" name="account_limit" placeholder="Введіть ліміт" required>
+
+            <button type="submit" class="submit-button">Продовжити</button>
+        </form>
     </div>
-    
-    
 </body>
 </html>
