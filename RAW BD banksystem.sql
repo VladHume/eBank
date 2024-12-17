@@ -37,7 +37,7 @@ CREATE TABLE card_account(
 	credit_number 	VARCHAR(16),
 	card_type	INT,
     payment_system_id INT,
-	sum INT,
+	sum INT DEFAULT 100000,
 	my_money INT,
 	exporation_date DATETIME,
 	cvv_code VARCHAR(3),
@@ -62,6 +62,7 @@ CREATE TABLE transaction(
 	payer_id INT,
 	receiver_id INT,
 	status VARCHAR(50),
+    payment_destination VARCHAR(200),
 	payment_system_id INT,
 	currency INT,
 	PRIMARY KEY(transaction_id)
@@ -146,9 +147,9 @@ CREATE TABLE card_types(
 CREATE TABLE deposits(
 	deposit_id INT NOT NULL AUTO_INCREMENT,
 	client_id INT,
-	account INT,
 	opening_date DATETIME,
 	closing_date DATETIME,
+    amount INT,
 	interest_rate VARCHAR(50),
 	status VARCHAR(50),
 	currency INT,
@@ -249,10 +250,6 @@ ALTER TABLE business
 ADD CONSTRAINT FK_BussinessManager FOREIGN KEY (account_manager_id) REFERENCES managers (manager_id) ON DELETE SET NULL;
 
 -- transaction
-ALTER TABLE transaction
-ADD CONSTRAINT FK_TransPayers FOREIGN KEY (payer_id) REFERENCES card_account (card_account_id) ON DELETE CASCADE;
-ALTER TABLE transaction
-ADD CONSTRAINT FK_TransReciever FOREIGN KEY (receiver_id) REFERENCES card_account (card_account_id) ON DELETE CASCADE;
 ALTER TABLE transaction
 ADD CONSTRAINT FK_TransPaySys FOREIGN KEY (payment_system_id) REFERENCES payment_systems (payment_system_id) ON DELETE SET NULL;
 ALTER TABLE transaction

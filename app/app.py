@@ -1,3 +1,5 @@
+from locale import currency
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_mysqldb import MySQL
 from datetime import datetime
@@ -169,6 +171,7 @@ def create_account():
 
     return render_template('creating_account_screen.html')
 
+
 @app.route('/home_screen')
 def home_screen():
     user_id = session.get('user_id')
@@ -178,7 +181,7 @@ def home_screen():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Get client_id from client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -186,7 +189,7 @@ def home_screen():
 
         client_id = client[0]
 
-        # Отримання акаунтів типу 1 з таблиці account
+        # Get accounts of type 1 from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -195,17 +198,22 @@ def home_screen():
 
         account_ids = [account[0] for account in accounts]
 
-        # Отримання інформації про карткові акаунти з таблиці card_account
+        # Ensure account_ids is a tuple, even if it has only one account_id
+        if len(account_ids) == 1:
+            account_ids = (account_ids[0],)  # make it a tuple
+
+        # Get card account information from the card_account table
         cursor.execute("""
                 SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                 FROM card_account WHERE account_id IN %s
-            """, (tuple(account_ids),))
+            """, (account_ids,))
         cards = cursor.fetchall()
 
         if not cards:
             return redirect(url_for('creating_card'))
 
         card_list = []
+
         for card in cards:
             card_info = {
                 "card_account_id": card[0],
@@ -217,7 +225,7 @@ def home_screen():
                 "cvv_code": card[6]
             }
 
-            # Отримання типу картки за card_type_id
+            # Get card type information
             cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
             card_type = cursor.fetchone()
             if card_type:
@@ -225,6 +233,38 @@ def home_screen():
             else:
                 card_info["card_type"] = "Невідомий тип"
 
+            # Get the last 3 transactions related to the card_account_id and identify transaction type
+            cursor.execute("""
+                SELECT t.sum, t.date, t.status, t.payer_id, t.receiver_id, t.currency
+                FROM transaction t
+                WHERE t.receiver_id = %s OR t.payer_id = %s
+                ORDER BY t.date DESC LIMIT 3
+            """, (card[0], card[0]))
+
+            transactions = cursor.fetchall()
+
+            transaction_list = []
+
+            for t in transactions:
+                transaction_type = '+' if t[4] == card[0] else '-'
+                cursor.execute("""
+                                SELECT c.name
+                                FROM currency_conversion c
+                                WHERE currency_id = %s""", (t[5],))
+                currency_name = cursor.fetchone()
+
+                # Check if currency_name exists before accessing it
+                currency_name = currency_name[0] if currency_name else "Невідома валюта"
+
+                transaction_info = {
+                    "sum": t[0],
+                    "date": t[1],
+                    "currency": currency_name,
+                    "transaction_type": transaction_type
+                }
+                transaction_list.append(transaction_info)
+
+            card_info["transactions"] = transaction_list
             card_list.append(card_info)
 
         return render_template('home_screen.html', cards=card_list)
@@ -509,6 +549,331 @@ def delete_card(card_id):
     finally:
         cursor.close()
 
+@app.route('/deposits')
+def deposits():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('home_screen'))
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Отримання client_id з таблиці client
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            flash("Клієнт не знайдений", 'error')
+            return redirect(url_for('home_screen'))
+
+        client_id = client[0]
+
+        # Отримання акаунтів типу 1 з таблиці account
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
+        accounts = cursor.fetchall()
+
+        if not accounts:
+            flash("Акаунти не знайдені", 'error')
+            return redirect(url_for('home_screen'))
+
+        account_ids = [account[0] for account in accounts]
+
+        # Отримання інформації про карткові акаунти з таблиці card_account
+        cursor.execute("""
+                    SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                    FROM card_account WHERE account_id IN %s
+                """, (tuple(account_ids),))
+        cards = cursor.fetchall()
+
+        if not cards:
+            return redirect(url_for('creating_card'))
+
+        card_list = []
+        for card in cards:
+            card_info = {
+                "card_account_id": card[0],
+                "credit_number": card[1],
+                "my_money": card[2],
+                "sum": card[3],
+                "credit_limit": card[4],
+                "exporation_date": card[5],
+                "cvv_code": card[6]
+            }
+
+            # Отримання типу картки за card_type_id
+            cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
+            card_type = cursor.fetchone()
+            if card_type:
+                card_info["card_type"] = card_type[0]
+            else:
+                card_info["card_type"] = "Невідомий тип"
+
+            card_list.append(card_info)
+
+        # Перевірка наявності депозиту
+        cursor.execute("SELECT * FROM deposits WHERE client_id = %s", (client_id,))
+        deposit = cursor.fetchone()
+
+        if deposit:
+            # Якщо депозит існує, передаємо його дані в шаблон
+            deposit_data = {
+                "amount": deposit[4],
+                "interest_rate": deposit[5],
+                "opening_date": deposit[2],
+                "closing_date": deposit[3]
+            }
+        else:
+            deposit_data = None
+
+        return render_template('deposits.html', cards=card_list, deposit_data=deposit_data)
+
+    except Exception as e:
+        flash(f"Помилка: {e}", 'error')
+        return redirect(url_for('home_screen'))
+
+@app.route('/take_deposit', methods=['GET', 'POST'])
+def take_deposit():
+    try:
+        user_id = session.get('user_id')
+
+        if not user_id:
+            flash("Користувач не авторизований", 'error')
+            return redirect(url_for('deposits'))
+
+        # Отримання даних депозиту з форми
+        credit_number = request.form.get('credit_number')
+        opening_date = datetime.today()
+        closing_date = request.form.get('closing_date')
+        interest_rate = int(request.form.get('interest_rate'))
+        deposit_amount = request.form.get('deposit-amount')
+        # Отримання curr_id для картки
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            "SELECT curr_id FROM card_account WHERE card_account_id = %s",
+            (credit_number,)
+        )
+        curr_id = cursor.fetchone()
+        if not curr_id:
+            flash("Щось не так з валютою", 'error')
+            return redirect(url_for('deposits'))
+
+        cursor.execute(
+            "SELECT payment_system_id FROM card_account WHERE card_account_id = %s",
+            (credit_number,)
+        )
+        payment_system_id = cursor.fetchone()
+
+        if not payment_system_id:
+            flash("Щось не так з платіжною системою", 'error')
+            return redirect(url_for('deposits'))
+
+        cursor.execute(
+            "SELECT sum FROM card_account WHERE card_account_id = %s",
+            (credit_number,)
+        )
+
+        sum = cursor.fetchone()
+
+        if not sum:
+            flash("Щось не так з балансом", 'error')
+            return redirect(url_for('deposits'))
+
+        # Отримання курсу для конвертації у гривні
+        cursor.execute(
+            "SELECT sales_rate FROM currency_conversion WHERE currency_id = %s",
+            (curr_id,)
+        )
+        conversion = cursor.fetchone()
+
+        if not conversion:
+            flash("Курс валют не знайдено", 'error')
+            return redirect(url_for('deposits'))
+
+        sales_rate = conversion[0]
+
+        deposit_amount_uah = int(deposit_amount) * sales_rate
+
+        if sum[0] < int(deposit_amount):
+            flash("На картці недостатньо коштів", 'error')
+            return redirect(url_for('deposits'))
+
+        # Оновлення балансу картки
+        cursor.execute(
+            "UPDATE card_account SET sum = sum - %s WHERE card_account_id = %s",
+            (deposit_amount, credit_number)
+        )
+
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        # Виклик методу для створення транзакції
+        transaction_data = {
+            "sum": deposit_amount,
+            "payer_id": credit_number,
+            "receiver_id": 0,
+            "status": "Completed",
+            "payment_system_id": payment_system_id[0],  # Значення за замовчуванням
+            "currency": curr_id[0],
+            "payment_destination": "Поповнення депозиту"
+        }
+        # Виклик функції для створення транзакції безпосередньо
+        create_transaction_response = create_transaction_internal(transaction_data)
+        if create_transaction_response.get("error"):
+            raise Exception(create_transaction_response["error"])
+        # Додавання депозиту в базу
+        cursor.execute(
+            """
+            INSERT INTO deposits (client_id, interest_rate, opening_date, closing_date, amount)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (client, interest_rate, opening_date, closing_date, deposit_amount_uah)
+        )
+
+        mysql.connection.commit()
+        return redirect(url_for('deposits'))
+
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Помилка : {e}", 'error')
+        return redirect(url_for('deposits'))
+
+def create_transaction_internal(data):
+    try:
+        sum = data['sum']
+        payer_id = data['payer_id']
+        receiver_id = data['receiver_id']
+        status = data.get('status', 'Pending')
+        payment_system_id = data['payment_system_id']
+        currency = data['currency']
+        payment_destination =  data['payment_destination']
+
+        # Перетворення типів для коректного внесення в базу
+        sum = int(sum)
+        payer_id = int(payer_id)
+        receiver_id = int(receiver_id)
+        payment_system_id = int(payment_system_id)
+        currency = int(currency)
+
+        # Поточна дата
+        date = datetime.now().strftime('%Y-%m-%d')
+
+        # Додавання транзакції в базу
+        cursor = mysql.connection.cursor()
+        cursor.execute(
+            """
+            INSERT INTO transaction (sum, date, payer_id, receiver_id, status, payment_system_id, currency, payment_destination)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (sum, date, payer_id, receiver_id, status, payment_system_id, currency, payment_destination)
+        )
+        mysql.connection.commit()
+        return {"message": "Транзакція успішно створена", "transaction_id": cursor.lastrowid}
+
+    except Exception as e:
+        mysql.connection.rollback()
+        return {"error": str(e)}
+
+@app.route('/transactions')
+def transactions():
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Get client_id from client table
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            return "Клієнт не знайдений", 404
+
+        client_id = client[0]
+
+        # Get accounts of type 1 from the account table
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
+        accounts = cursor.fetchall()
+
+        if not accounts:
+            return "Акаунти не знайдені", 404
+
+        account_ids = [account[0] for account in accounts]
+
+        # Ensure account_ids is a tuple, even if it has only one account_id
+        if len(account_ids) == 1:
+            account_ids = (account_ids[0],)  # make it a tuple
+
+        # Get card account information from the card_account table
+        cursor.execute("""
+                    SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                    FROM card_account WHERE account_id IN %s
+                """, (account_ids,))
+        cards = cursor.fetchall()
+
+        if not cards:
+            return redirect(url_for('creating_card'))
+
+        card_list = []
+
+        for card in cards:
+            card_info = {
+                "card_account_id": card[0],
+                "credit_number": card[1],
+                "my_money": card[2],
+                "sum": card[3],
+                "credit_limit": card[4],
+                "exporation_date": card[5],
+                "cvv_code": card[6]
+            }
+
+            # Get card type information
+            cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
+            card_type = cursor.fetchone()
+            if card_type:
+                card_info["card_type"] = card_type[0]
+            else:
+                card_info["card_type"] = "Невідомий тип"
+
+            cursor.execute("""
+                    SELECT t.sum, t.date, t.status, t.payer_id, t.receiver_id, t.currency, t.payment_destination, t.transaction_id
+                    FROM transaction t
+                    WHERE t.receiver_id = %s OR t.payer_id = %s
+                    ORDER BY t.date DESC
+                """, (card[0], card[0]))
+
+            transactions = cursor.fetchall()
+
+            transaction_list = []
+
+            for t in transactions:
+                transaction_type = '+' if t[4] == card[0] else '-'
+                cursor.execute("""
+                                    SELECT c.name
+                                    FROM currency_conversion c
+                                    WHERE currency_id = %s""", (t[5],))
+                currency_name = cursor.fetchone()
+
+                # Check if currency_name exists before accessing it
+                currency_name = currency_name[0] if currency_name else "Невідома валюта"
+
+                transaction_info = {
+                    "sum": t[0],
+                    "date": t[1],
+                    "currency": currency_name,
+                    "transaction_type": transaction_type,
+                    "status": t[2],
+                    "payer_id": t[3],
+                    "receiver_id": t[4],
+                    "payment_destination": t[6],
+                    "transaction_id": t[7]
+                }
+                transaction_list.append(transaction_info)
+
+            card_info["transactions"] = transaction_list
+            card_list.append(card_info)
+
+        return render_template('transactions.html', cards=card_list)
+    except Exception as e:
+        return f"Помилка: {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)

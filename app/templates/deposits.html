@@ -7,65 +7,172 @@
     <link rel="stylesheet" href="../static/styles/deposits_styles.css">
 </head>
 <header class="header">
-    <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <img src="../static/icons/logo.png" alt="Логотип банку" class="logo">
+    <h1> <a href="{{ url_for('home_screen') }}" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
         <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
         <a href="credit_history.html" class="tab-link-fields">кредит</a>
-        <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
-        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+        <a href="notifications.html"><img src="../static/icons/bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="../static/icons/user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
 <body>
-    <div class="container">
+     <div class="container">
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
         <div class="main-content">
             <!-- Ліва секція -->
             <div class="left-section">
                 <h2>Мій депозит</h2>
-                <div class="credit-value-block">
-                    <p class="credit-amount">Сума депозиту</p>
-                    <p class="credit-value">0 грн.</p>
-                </div>
-                <div class="button_box">
-                    <button type="button" class="deposit_button">Виписка по депозиту</button>
-                </div>
-            </div>
-
-            <!-- Права секція -->
-            <div class="right-section">
-                <div class="credit-details">
-                    <p>Відсоткова ставка:</p>
-                    <p>Час відкриття:</p>
-                    <p>Час закриття:</p>
-                </div>
-                <div class="credit-input">
-                    <div class="title-container">
-                        <h2 >Покласти на депозит </h2>
-                        <button type="submit" class="arrow-button">
-                            <img src="../static/icons/arrow_icon.png" alt="Взяти кредит">
-                        </button>
-                        
-                
+                {% if deposit_data %}
+                    <div class="credit-value-block">
+                        <p class="credit-amount">Сума депозиту</p>
+                        <p class="credit-value" id="deposit-value">{{ deposit_data.amount }} грн.</p>
                     </div>
-                    <div class="input-group">
-                        <input type="text" id="credit-card" placeholder="0000 0000 0000 0000">
-                        <img src="../static/icons/debit_card.png" alt="Картка" class="input-icon">
+                    <div class="credit-details">
+                        <p>Відсоткова ставка: <span>{{ deposit_data.interest_rate }}</span>%</p>
+                        <p>Час відкриття: <span>{{ deposit_data.opening_date }}</span></p>
+                        <p>Час закриття: <span>{{ deposit_data.closing_date }}</span></p>
                     </div>
-                    <div class="input-group">
-                        <input type="number" id="credit-amount" placeholder="Сума">
-                        <img src="../static/icons/dollar.png" alt="Гроші" class="input-icon">
+                {% else %}
+                    <div class="credit-value-block">
+                        <p class="credit-amount">Сума депозиту</p>
+                        <p class="credit-value" id="deposit-value">0 грн.</p>
                     </div>
-                    <div class="input-group">
-                        <input type="date" id="date_of_closing" placeholder="Дата закриття">
-                       
+                    <form action="{{ url_for('take_deposit') }}" method="POST" id="deposit-form">
+                    <!-- Права секція -->
+                    <div class="right-section">
+                        <input type="hidden" id="hidden-interest-rate" name="interest_rate" />
+                        <input type="hidden" id="hidden-closing-date" name="closing_date" />
+                        <div class="credit-details">
+                            <p>Відсоткова ставка: <span id="interest-rate">10</span>%</p>
+                            <p>Час відкриття: <span id="opening-date"></span></p>
+                            <p>Час закриття: <span id="closing-date"></span></p>
+                        </div>
+                        <div class="credit-input">
+                            <div class="title-container">
+                                <h2>Покласти на депозит</h2>
+                                <button type="submit" class="arrow-button">
+                                    <img src="../static/icons/arrow_icon.png" alt="Взяти кредит">
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <select id="credit_number" name="credit_number" required>
+                                    <option value="">Оберіть картку</option>
+                                    {% for card in cards %}
+                                        <option value="{{ card.card_account_id }}" id="card-account-id">{{ card.credit_number }}</option>
+                                    {% endfor %}
+                                </select>
+                                <img src="../static/icons/debit_card.png" alt="Картка" class="input-icon">
+                            </div>
+                            <div class="input-group">
+                                <input type="number" id="deposit-amount" name="deposit-amount" placeholder="Сума" min="1000" required />
+                                <img src="../static/icons/dollar.png" alt="Гроші" class="input-icon" />
+                            </div>
+                            <div class="input-group">
+                                <input type="date" id="date_of_closing" name="date_of_closing" placeholder="Дата закриття" onchange="updateClosingDate()" required />
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </form>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Блок кнопок -->
-
     </div>
+
+    <script>
+        // Функція для форматування часу на сьогоднішню дату
+        function setOpeningDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const formattedDate = `${day}.${month}.${year}`;
+
+            document.getElementById('opening-date').innerText = formattedDate;
+        }
+
+        // Функція для оновлення дати закриття та розрахунку відсотків
+        function updateClosingDate() {
+            const closingDate = document.getElementById('date_of_closing').value;
+            const closingDateFormatted = new Date(closingDate);
+            const openingDate = new Date();
+            const yearsDifference = (closingDateFormatted.getFullYear() - openingDate.getFullYear());
+
+            // Форматування дати для відображення
+            const day = String(closingDateFormatted.getDate()).padStart(2, '0');
+            const month = String(closingDateFormatted.getMonth() + 1).padStart(2, '0');
+            const year = closingDateFormatted.getFullYear();
+            document.getElementById('closing-date').innerText = `${day}.${month}.${year}`;
+
+            // Розрахунок відсоткової ставки
+            let interestRate = 10; // Початковий відсоток
+            const additionalYears = Math.floor(yearsDifference / 10);
+            interestRate += additionalYears * 2; // 2% за кожні 10 років
+            interestRate = interestRate > 100 ? 100 : interestRate; // максимум 100%
+
+            document.getElementById('interest-rate').innerText = `${interestRate}`;
+
+            // Оновлення прихованих полів
+            document.getElementById('hidden-interest-rate').value = interestRate;
+            document.getElementById('hidden-closing-date').value = closingDate;
+        }
+
+
+        // Функція для встановлення мінімальної дати закриття на 1 рік вперед
+        function setMinClosingDate() {
+            const today = new Date();
+            const nextYear = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+            const year = nextYear.getFullYear();
+            const month = String(nextYear.getMonth() + 1).padStart(2, '0');
+            const day = String(nextYear.getDate()).padStart(2, '0');
+            const minDate = `${year}-${month}-${day}`;
+
+            document.getElementById('date_of_closing').setAttribute('min', minDate);
+            document.getElementById('date_of_closing').value = minDate; // Автоматичне встановлення дати закриття на наступний рік
+        }
+
+        // Перевірка форми перед відправкою
+        document.getElementById('deposit-form').onsubmit = function (event) {
+            const cardNumber = document.getElementById('credit_number').value;
+            const amount = document.getElementById('deposit-amount').value;
+            const closingDate = document.getElementById('date_of_closing').value;
+
+            if (!cardNumber) {
+                alert('Оберіть картку!');
+                event.preventDefault();
+                return false;
+            }
+
+            if (!amount || amount < 1000) {
+                alert('Сума має бути заповненою і не меншою за 1000!');
+                event.preventDefault();
+                return false;
+            }
+
+            if (!closingDate) {
+                alert('Оберіть дату закриття!');
+                event.preventDefault();
+                return false;
+            }
+        };
+
+        // Викликаємо функції після завантаження сторінки
+        window.onload = function () {
+            setOpeningDate();
+            setMinClosingDate();
+            updateClosingDate();
+        };
+    </script>
 </body>
 </html>

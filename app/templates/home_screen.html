@@ -12,7 +12,7 @@
     <div class="menu">
         <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
-        <a href="deposits.html" class="tab-link-fields">депозит</a>
+        <a href="{{ url_for('deposits')}}" class="tab-link-fields">депозит</a>
         <a href="credit_history.html" class="tab-link-fields">кредит</a>
         <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
@@ -24,7 +24,7 @@
         <a href="{{ url_for('card_info') }}"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
 
         <h2 class="my_transactions">Мої транзакції </h2>
-        <a href="transactions.html"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
+        <a href="{{url_for('transactions')}}"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
 
     </div>
 
@@ -40,14 +40,21 @@
                         <p class="bank_name">єБанк</p>
                         <p class="card_number" id="card_number">{{ cards[0].credit_number }}</p> <!-- Виводимо номер тільки першої картки -->
                     </div>
-                    <p class="text">Карта типу {{ cards[0].card_type }}<br>{{ cards[0].my_money }} грн</p> <!-- Інформація про першу картку -->
+                    <p class="text">Карта типу {{ cards[0].card_type }}<br>{{ cards[0].sum }}</p> <!-- Інформація про першу картку -->
                 </div>
             </div>
         {% endif %}
 
         <div class="vidget1">
-            <p class="text">Сповіщення дата сума </p>
-            <p class="text">Сповіщення дата сума</p>
+            {% for card in cards %}
+            {% for transaction in card.transactions %}
+                <div class="transaction-item">
+                    <p class="text">{{ transaction.date }} : {{ transaction.transaction_type }} {{ transaction.sum }} {{ transaction.currency }}</p>
+                </div>
+            {% else %}
+                <p>Немає транзакцій</p>
+            {% endfor %}
+            {% endfor %}
         </div>
 
     </div>
@@ -64,13 +71,15 @@
     <div class="main_container">
         <div class="vidget2">
             <div class="transfer-container">
-                <input type="text" placeholder="0000 0000 0000 0000">
-                <img src="..\static\icons\debit_card.png" alt="Дебетова картка" class="card-icon" />
+                <input type="text" id="receiver" placeholder="0000 0000 0000 0000">
+                <img src="../static/icons/debit_card.png" alt="Дебетова картка" class="card-icon" />
+                <span id="receiver-error" style="color:red; display:none;">Некоректний номер картки</span>
             </div>
 
             <div class="card-sum-container">
-                <input type="text" placeholder="Сума переказу">
-                <img src="..\static\icons\dollar.png" alt="Долар" class="dollar-icon" />
+                <input type="text" id="amount" placeholder="Сума переказу">
+                <img src="../static/icons/dollar.png" alt="Долар" class="dollar-icon" />
+                <span id="amount-error" style="color:red; display:none;">Сума повинна бути від 0 до 1,000,000</span>
             </div>
         </div>
 
@@ -88,6 +97,39 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const receiverInput = document.getElementById('receiver');
+            const amountInput = document.getElementById('amount');
+            const receiverError = document.getElementById('receiver-error');
+            const amountError = document.getElementById('amount-error');
+
+            // Регулярний вираз для Visa та MasterCard
+            const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14})$/;
+
+            // Валідація номера картки
+            receiverInput.addEventListener('input', function () {
+                const cardNumber = receiverInput.value.replace(/\s+/g, ''); // Забираємо пробіли
+                if (cardRegex.test(cardNumber)) {
+                    receiverError.style.display = 'none';
+                    receiverInput.style.borderColor = 'green';
+                } else {
+                    receiverError.style.display = 'inline';
+                    receiverInput.style.borderColor = 'red';
+                }
+            });
+
+            // Валідація суми переказу
+            amountInput.addEventListener('input', function () {
+                const amount = parseFloat(amountInput.value);
+                if (!isNaN(amount) && amount >= 0 && amount <= 1000000) {
+                    amountError.style.display = 'none';
+                    amountInput.style.borderColor = 'green';
+                } else {
+                    amountError.style.display = 'inline';
+                    amountInput.style.borderColor = 'red';
+                }
+            });
+        });
         // Функція для форматування номеру картки
         function formatCardNumber(cardNumber) {
             return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');

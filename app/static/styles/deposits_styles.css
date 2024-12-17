@@ -265,3 +265,36 @@ h2 {
     background-color: #45a049; /* Темніший зелений при наведенні */
     transform: scale(1.05); /* Легке збільшення при наведенні */
 }
+
+#credit_number {
+    width: 100%; /* Ширина поля */
+    height: 40px; /* Висота поля */
+    padding: 8px 10px; /* Відступи всередині */
+    font-size: 16px; /* Розмір шрифта */
+    border: 1px solid #ccc; /* Бордер навколо */
+    border-radius: 5px; /* Закруглені кути */
+    background-color: #f9f9f9; /* Колір фону */
+    color: #333; /* Колір тексту в списку */
+    display: inline-block;
+    position: relative;
+    font-family: Arial, sans-serif; /* Вибір шрифта */
+    appearance: none; /* Видалення стандартного вигляду браузера для select */
+    -webkit-appearance: none; /* Для Safari */
+    -moz-appearance: none; /* Для Firefox */
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    right: 10px; /* Іконка праворуч */
+    top: 50%;
+    transform: translateY(-50%); /* Центрує по вертикалі */
+    width: 20px;
+    height: auto;
+    pointer-events: none; /* Іконка не повинна реагувати на кліки */
+}

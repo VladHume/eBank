@@ -8,39 +8,29 @@
 </head>
 <header class="header">
     <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
         <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
-        <a href="deposits.html" class="tab-link-fields">депозит</a>
+        <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
         <a href="credit_history.html" class="tab-link-fields">кредит</a>
         <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
-        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+        <a href="{{url_for('client_cabinet')}}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
 <body>
     <div class="transactions-container">
         <p class="transactions-text">Мої транзакції</p>
-        <div class="transaction">
-            <p class="transaction-text">Оплата сеансу психолога</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-
-        <div class="transaction">
-            <p class="transaction-text">Повний чек-ап організму в ОксфордМедікал</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-        <div class="transaction">
-            <p class="transaction-text">Новорічні гноми з юска</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-
+        {% for card in cards %}
+            {% for transaction in card.transactions %}
+                <div class="transaction">
+                    <p class="transaction-text">{{transaction.payment_destination}} {{transaction.transaction_type}} {{transaction.sum}} {{transaction.currency}}</p>
+                    <button class="image-button">
+                        <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
+                    </button>
+                </div>
+            {% endfor %}
+        {% endfor %}
         
 
     </div>
