@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\transactions_b_styles.css">
+</head>
+<header class="header_business">
+    <img src="..\static\icons\logo_purple.png" alt="Логотип банку" class="logo">
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="home_screen.html" class="tab-link-fields">для приватних осіб</a>
+       
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="{{url_for('client_cabinet')}}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="transactions-container">
+        <p class="transactions-text">Мої транзакції</p>
+        {% for card in cards %}
+            {% for transaction in card.transactions %}
+                <div class="transaction">
+                    <p class="transaction-text">{{transaction.payment_destination}} {{transaction.transaction_type}} {{transaction.sum}} {{transaction.currency}}</p>
+                    <button class="image-button">
+                        <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
+                    </button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        
+
+    </div>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\update_info_b_styles.css">
+    <script>
+        function validateForm() {
+            var surname = document.getElementById("surname").value.trim();
+            var name = document.getElementById("name").value.trim();
+            var patronymic = document.getElementById("patronymic").value.trim();
+            var email = document.getElementById("email").value.trim();
+            var phone = document.getElementById("phone number").value.trim();
+            var password = document.getElementById("password").value.trim();
+            var passport = document.getElementById("passport id").value.trim();
+            var address = document.getElementById("address").value.trim();
+
+            var nameRegex = /^[А-Яа-яІіЇїЄєҐґ]+$/;
+
+            if (!nameRegex.test(surname)) {
+                alert("Прізвище повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!nameRegex.test(name)) {
+                alert("Ім'я повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!nameRegex.test(patronymic)) {
+                alert("По батькові повинно містити лише літери українського алфавіту.");
+                return false;
+            }
+
+            if (!surname || !name || !patronymic || !email || !phone || !password || !passport || !address) {
+                alert("Будь ласка, заповніть усі поля.");
+                return false;
+            }
+
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Введіть коректну електронну пошту.");
+                return false;
+            }
+
+            var phoneRegex = /^(?:\+380|0)\d{9}$/;
+            if (!phoneRegex.test(phone)) {
+                alert("Номер телефону повинен бути у форматі +380XXXXXXXXX або 0XXXXXXXXX.");
+                return false;
+            }
+
+            if (password.length < 10) {
+                alert("Пароль повинен бути мінімум з 10 символів.");
+                return false;
+            }
+
+            var passportRegex = /^([A-ZА-ЯІЇЄ]{2}\d{6}|\d{9})$/;
+            if (!passportRegex.test(passport)) {
+                alert("Номер паспорта повинен бути у форматі: 2 літери та 6 цифр або 9 цифр.");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</head>
+<header class="header_business">
+    <img src="..\static\icons\logo_purple.png" alt="Логотип банку" class="logo">
+    <h1> <a href="{{ url_for('home_screen') }}" class="ebank-field">еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</a></h1>
+    <div class="menu">
+        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="home_screen.html" class="tab-link-fields">для приватних осіб</a>
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="container">
+        <main class="form-container">
+           
+            <form class="login-form" action="{{ url_for('update_info') }}" method="POST" onsubmit="return validateForm()">
+                <label for="surname">Прізвище</label>
+                <input type="text" id="surname" name="surname" placeholder="Введіть прізвище">
+
+                <label for="name">Ім'я</label>
+                <input type="text" id="name" name="name" placeholder="Введіть ім'я">
+
+                <label for="patronymic">По батькові</label>
+                <input type="text" id="patronymic" name="patronymic" placeholder="Введіть по батькові">
+
+                <label for="email">email</label>
+                <input type="text" id="email" name="email" placeholder="Введіть електронну пошту">
+
+                <label for="phone number">Номер телефону</label>
+                <input type="text" id="phone number" name="phone number" placeholder="(+38)">
+
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Введіть пароль">
+                
+                <label for="passport id">Номер паспорта</label>
+                <input type="text" id="passport id" name="passport id" placeholder="Введіть номер паспорта">
+
+                <label for="address">Адреса</label>
+                <input type="text" id="address" name="address" placeholder="Введіть адресу проживання">
+
+                <button type="submit">Продовжити</button>
+            </form>
+        </main>
+    </div>
+    
+    
+</body>
+</html>
