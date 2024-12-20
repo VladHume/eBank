@@ -8,13 +8,13 @@
 </head>
 <header class="header">
     <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
+        <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
-        <a href="deposits.html" class="tab-link-fields">депозит</a>
-        <a href="credit_history.html" class="tab-link-fields">кредит</a>
-        <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
-        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+        <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
+        <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
 <body>
@@ -25,15 +25,15 @@
             <div class="exchange-rates">
                 <div class="currency-row">
                     <img src="..\static\icons\USD.png" alt="USD" class="currency-icon">
-                    <span class="currency-value">41.38 USD</span>
+                    <span class="currency-value" id="usd-rate">{{currencies[1][1]}} {{currencies[1][2]}} / {{currencies[1][3]}} {{currencies[0][1]}}</span>
                 </div>
                 <div class="currency-row">
                     <img src="..\static\icons\UAH.png" alt="UAH" class="currency-icon">
-                    <span class="currency-value">41.38 USD</span>
+                    <span class="currency-value" id="uah-rate">{{currencies[0][1]}} {{currencies[0][2]}} / {{currencies[0][3]}} {{currencies[0][1]}}</span>
                 </div>
                 <div class="currency-row">
                     <img src="..\static\icons\EUR.png" alt="EUR" class="currency-icon">
-                    <span class="currency-value">41.38 EUR</span>
+                    <span class="currency-value" id="eur-rate">{{currencies[2][1]}} {{currencies[2][2]}} / {{currencies[2][3]}} {{currencies[0][1]}}</span>
                 </div>
             </div>
         </div>
@@ -42,37 +42,95 @@
         <div class="conversion-container">
             <div class="conversion-header">
                 <h2 class="section-title">Конвертація валюти</h2>
-                <a href="home_screen.html">
-                    <img src="..\static\icons\arrow_icon.png" alt="Перейти" class="tab-link-fields-arrow">
-                </a>
-                
             </div>
             <form class="conversion-form">
-                <label for="currency">З валюти</label>
-                <select id="currency" name="currency" class="form-input">
+                <label for="currency_from">З валюти</label>
+                <select id="currency_from" name="currency_from" class="form-input">
                     <option value="">Оберіть валюту</option>
-                    <option value="credit">USD</option>
-                    <option value="debit">EUR</option>
-                    <option value="debit">UAH</option>
+                    {% for currency in currencies %}
+                        <option value="{{ currency[0] }}">{{ currency[1] }}</option>
+                    {% endfor %}
                 </select>
-                <label for="to-currency">У валюту</label>
-                <select id="currency" name="currency" class="form-input">
+
+                <label for="currency_to">У валюту</label>
+                <select id="currency_to" name="currency_to" class="form-input">
                     <option value="">Оберіть валюту</option>
-                    <option value="credit">USD</option>
-                    <option value="debit">EUR</option>
-                    <option value="debit">UAH</option>
+                    {% for currency in currencies %}
+                        <option value="{{ currency[0] }}">{{ currency[1] }}</option>
+                    {% endfor %}
                 </select>
-                
-                <label for="account-number">З картки</label>
-                <input type="text" id="account-number" class="form-input">
-                <label for="account-number">На картку</label>
-                <input type="text" id="account-number" class="form-input">
+
                 <label for="amount">Сума</label>
                 <input type="text" id="amount" class="form-input">
+
+                <p style="font-weight: bold; font-size: 30pt; text-align: right">
+                    <span id="sum"></span>
+                </p>
             </form>
         </div>
     </div>
+    <script>
+        // Дані про курси валют
+        const currencies = {{ currencies | tojson }};  // Використовуємо Flask для передачі курсів у JavaScript
+
+        // Обробники подій для всіх полів форми
+        document.getElementById('amount').addEventListener('input', calculateConversion);
+        document.getElementById('currency_from').addEventListener('change', calculateConversion);
+        document.getElementById('currency_to').addEventListener('change', calculateConversion);
+
+        function calculateConversion() {
+            const amountInput = document.getElementById('amount').value;
+            const fromCurrency = document.getElementById('currency_from').value;
+            const toCurrency = document.getElementById('currency_to').value;
+            const sumElement = document.getElementById('sum'); // Елемент для відображення суми
+
+            // Перевірка введення даних
+            const amount = parseFloat(amountInput);
+            if (isNaN(amount) || amount <= 0 || !fromCurrency || !toCurrency) {
+                sumElement.textContent = ''; // Якщо дані некоректні, очищуємо результат
+                return;
+            }
+
+            // Отримуємо курси валют з масиву currencies
+            const exchangeRates = {};
+            exchangeRates['2'] = { buyRate: parseFloat(currencies[1][2]), sellRate: parseFloat(currencies[1][3]) };
+            exchangeRates['1'] = { buyRate: parseFloat(currencies[0][2]), sellRate: parseFloat(currencies[0][3]) };
+            exchangeRates['3'] = { buyRate: parseFloat(currencies[2][2]), sellRate: parseFloat(currencies[2][3]) };
+
+            if (!exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) {
+                sumElement.textContent = 'Немає даних для обраної валюти'; // Якщо немає необхідних даних
+                return;
+            }
+
+            // Розрахунок
+            let convertedAmount;
+
+            if (fromCurrency === toCurrency) {
+                // Якщо валюти однакові
+                convertedAmount = amount;
+            } else if (fromCurrency === '1') {
+                // З гривні у валюту (курс продажу)
+                convertedAmount = amount / exchangeRates[toCurrency].sellRate;
+            } else if (toCurrency === '1') {
+                // З валюти у гривню (курс купівлі)
+                convertedAmount = amount * exchangeRates[fromCurrency].buyRate;
+            } else {
+                // Між валютами через гривню
+                const amountInUAH = amount * exchangeRates[fromCurrency].buyRate; // Переведення у гривню
+                convertedAmount = amountInUAH / exchangeRates[toCurrency].sellRate; // З гривні у цільову валюту
+            }
+
+            if(toCurrency === "1"){
+                toCurrency_s = "UAH";
+            } else if (toCurrency === "2") {
+                toCurrency_s = "USD";
+            } else{
+                toCurrency_s = "EUR";
+            }
+
+            // Оновлення результату у span з id="sum"
+            sumElement.textContent = `${convertedAmount.toFixed(2)} ${toCurrency_s}`;
+        }
+    </script>
 </body>
-
-
 </html>

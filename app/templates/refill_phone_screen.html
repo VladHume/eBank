@@ -5,52 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>еБАНК - Банк твоїх можливостей</title>
     <link rel="stylesheet" href="..\static\styles\transfer_screen_styles.css">
+    <script>
+        function validateForm(event) {
+            event.preventDefault(); // Зупинити стандартну відправку форми
+            const cardNumber = document.getElementById("card_number").value;
+            const phoneNumber = document.getElementById("phone_number").value;
+            const sum = document.getElementById("sum").value;
+            const phonePattern = /^\+380\d{9}$/; // Формат: +380XXXXXXXXX
+
+            if (!cardNumber) {
+                alert("Будь ласка, оберіть картку.");
+                return false;
+            }
+
+            if (!phoneNumber.match(phonePattern)) {
+                alert("Неправильний номер телефону. Формат: +380XXXXXXXXX.");
+                return false;
+            }
+
+            if (!sum || isNaN(sum) || sum < 5 || sum > 100000) {
+                alert("Сума повинна бути числом від 5 до 100000 грн.");
+                return false;
+            }
+
+            event.target.submit(); // Якщо всі перевірки пройдено, відправити форму
+        }
+    </script>
 </head>
 <header class="header">
     <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
     <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
-        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
-        <a href="deposits.html" class="tab-link-fields">депозит</a>
-        <a href="credit_history.html" class="tab-link-fields">кредит</a>
-        <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
-        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+        <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
+        <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
 <body>
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
         <main class="form-container">
-           
-            <form class="transfer-form" action="home_screen.html" method="get">
+            <form class="transfer-form" action="{{url_for('create_refill_phone')}}" method="POST" onsubmit="validateForm(event)">
                 <label for="surname">З картки</label>
                 <select id="card_number" name="card_number">
                     <option value="">Оберіть картку</option>
-                    <option value="credit">4441 1110 4340 0049</option>
-                    <option value="debit">4441 1110 5607 7047</option>
+                    {% for card in cards %}
+                        <option value="{{ card.card_account_id }}" id="card-account-id">{{ card.credit_number }}</option>
+                    {% endfor %}
                 </select>
 
                 <label for="phone_number">Номер телефону</label>
-                <input type="text" id="phone_number" name="phone_number" placeholder="Введіть номер ">
+                <input type="text" id="phone_number" name="phone_number" placeholder="Введіть номер" value="{{ phone_number or '' }}">
 
                 <label for="sum">Сума переказу</label>
-                <input type="text" id="sum" name="sum" placeholder="Введіть суму">
-
-
-                <label for="currency">Валюта</label>
-                <select id="currency" name="currency">
-                    <option value="">Оберіть валюту</option>
-                    <option value="credit">USD</option>
-                    <option value="debit">EUR</option>
-                    <option value="debit">UAH</option>
-                </select>            
-               
+                <input type="text" id="sum" name="sum" placeholder="Введіть суму" value="{{ phone_sum or '' }}">
 
                 <button type="submit">Переказати</button>
             </form>
         </main>
     </div>
-    
-    
 </body>
 </html>

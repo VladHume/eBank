@@ -9,5 +9,6 @@
         </list>
       </option>
     </inspection_tool>
+    <inspection_tool class="XmlInvalidId" enabled="false" level="ERROR" enabled_by_default="false" />
   </profile>
 </component>

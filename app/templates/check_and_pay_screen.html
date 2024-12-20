@@ -4,43 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Підтвердження платежу</title>
-    <link rel="stylesheet" href="..\static\styles\check_and_pay_styles.css">
+    <link rel="stylesheet" href="../static/styles/check_and_pay_styles.css">
 </head>
-<header class="header">
-    <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
-</header>
 <body>
-    <div class="container">
-        
+<header class="header">
+    <img src="../static/icons/logo.png" alt="Логотип банку" class="logo">
+    <h1><a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+</header>
+
+<div class="container">
+    <form action="{{ url_for('pay') }}" method="POST">
         <main class="payment-details">
-          <div class="detail-row">
-            <span class="label">Відправник</span>
-            <span class="value">Бла бла бла<br>4441 5896 4578 7896</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Отримувач</span>
-            <span class="value">Бла бла бла<br>4441 5896 4578 7866</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Призначення</span>
-            <span class="value">Блаблабла</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Сума платежу</span>
-            <span class="value">54151.00 грн</span>
-          </div>
+            <div class="detail-row">
+                <span class="label">Відправник</span>
+                <span class="value">{{ sender_name }}</span>
+                <input type="hidden" id="card_account" name="card_account" value="{{ card_number or '' }}">
+            </div>
+            <div class="detail-row">
+                <span class="label">Отримувач</span>
+                <span class="value">{{ receiver_full_name }}<br>{{receiver_card}}</span>
+                <input type="hidden" id="receiver_full_name" name="receiver_full_name" value="{{ receiver_full_name }}">
+                <input type="hidden" id="receiver_card" name="receiver_card" value="{{ receiver_card }}">
+            </div>
+            <div class="detail-row">
+                <span class="label">Призначення</span>
+                <span class="value">{{ payment_destination }}</span>
+                <input type="hidden" id="destination" name="destination" value="{{ payment_destination }}">
+            </div>
+            <div class="detail-row">
+                <span class="label">Сума платежу</span>
+                <span class="value">{{ sum }} грн</span>
+                <input type="hidden" id="payment_sum" name="sum" value="{{ sum }}">
+            </div>
         </main>
         <footer>
-          <button class="pay-button" title="Взяти кредит" onclick="window.location.href='home_screen.html';">
-            Оплатити
-        </button>
+            <button class="pay-button" type="submit" title="Оплатити">
+                Оплатити
+            </button>
         </footer>
-      </div>
-    
-   
-    
-    
-    
+    </form>
+</div>
 </body>
 </html>

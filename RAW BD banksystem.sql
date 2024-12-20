@@ -1,11 +1,12 @@
-CREATE SCHEMA banksystem 
+SET GLOBAL event_scheduler = ON;
+CREATE SCHEMA banksystem
 DEFAULT CHARACTER SET cp1251 -- кодування
-COLLATE cp1251_ukrainian_ci; -- правила пошуку 
+COLLATE cp1251_ukrainian_ci; -- правила пошуку
 USE banksystem;
 -- спочатку створення усіх таблиць
 
 CREATE TABLE client (
--- імя	 		тип_даних	додаткові атрибути	
+-- імя	 		тип_даних	додаткові атрибути
 	client_id	INTEGER NOT NULL AUTO_INCREMENT,
     surname		VARCHAR(50),
     `name`		VARCHAR(50),
@@ -41,10 +42,13 @@ CREATE TABLE card_account(
 	my_money INT,
 	exporation_date DATETIME,
 	cvv_code VARCHAR(3),
+    credit_limit_full INT DEFAULT 20000,
 	credit_limit INT,
 	curr_id INT,
     pin VARCHAR(4),
-	PRIMARY KEY (card_account_id)	
+	PRIMARY KEY (card_account_id),
+	CHECK (my_money >= 0),
+    CHECK (credit_limit >= 0)
 );
 
 CREATE TABLE currency_conversion(
@@ -152,7 +156,6 @@ CREATE TABLE deposits(
     amount INT,
 	interest_rate VARCHAR(50),
 	status VARCHAR(50),
-	currency INT,
 	PRIMARY KEY(deposit_id)
 );
 
@@ -164,20 +167,6 @@ CREATE TABLE users(
 	PRIMARY KEY(user_id)
 );
 
-CREATE TABLE notification(
-	notification_id INT NOT NULL AUTO_INCREMENT,
-	user_id INT,
-	message TEXT,
-	date_sent DATETIME,
-	notification_type INT,
-	PRIMARY KEY(notification_id)
-);
-
-CREATE TABLE notification_type(
-	notification_type_id INT NOT NULL AUTO_INCREMENT,
-	type VARCHAR(50),
-	PRIMARY KEY(notification_type_id)
-);
 
 CREATE TABLE account_types(
 	account_type_id INT NOT NULL AUTO_INCREMENT,
@@ -211,8 +200,6 @@ ADD CONSTRAINT FK_ClientUser FOREIGN KEY (user_id) REFERENCES users (user_id) ON
 ALTER TABLE credit
 ADD CONSTRAINT FK_CreditGuarantor FOREIGN KEY (quarantor_id) REFERENCES quarantors (quarantor_id)  ON DELETE SET NULL;
 ALTER TABLE credit
-ADD CONSTRAINT FK_CreditCurrency FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
-ALTER TABLE credit
 ADD CONSTRAINT FK_CreditClient FOREIGN KEY (client_id) REFERENCES client (client_id); -- ON DELETE SET NULL;
 
 -- credit_history
@@ -228,16 +215,6 @@ ADD CONSTRAINT FK_CreditLHCAccount FOREIGN KEY (card_account_id) REFERENCES card
 -- deposits
 ALTER TABLE deposits
 ADD CONSTRAINT FK_DepoisitsCard FOREIGN KEY (client_id) REFERENCES client (client_id) ON DELETE CASCADE;
-ALTER TABLE deposits
-ADD CONSTRAINT FK_DepoisitsCurr FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
-
-
-
--- notification
-ALTER TABLE notification
-ADD CONSTRAINT FK_NotifUser FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE;
-ALTER TABLE notification
-ADD CONSTRAINT FK_NotifNotifType FOREIGN KEY (notification_type) REFERENCES notification_type (notification_type_id) ON DELETE CASCADE;
 
 -- private
 ALTER TABLE private
@@ -253,7 +230,7 @@ ADD CONSTRAINT FK_BussinessManager FOREIGN KEY (account_manager_id) REFERENCES m
 ALTER TABLE transaction
 ADD CONSTRAINT FK_TransPaySys FOREIGN KEY (payment_system_id) REFERENCES payment_systems (payment_system_id) ON DELETE SET NULL;
 ALTER TABLE transaction
-ADD CONSTRAINT FK_TransCurr FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL; 
+ADD CONSTRAINT FK_TransCurr FOREIGN KEY (currency) REFERENCES currency_conversion (currency_id) ON DELETE SET NULL;
 
 INSERT INTO card_types (type)
 VALUES
@@ -275,3 +252,184 @@ INSERT INTO account_types (type)
 VALUES
     ('Приватний'),
     ('Бізнес');
+
+
+DELIMITER //
+CREATE TRIGGER update_sum_on_change
+BEFORE UPDATE ON card_account
+FOR EACH ROW
+BEGIN
+    -- Коли значення поля `sum` зменшується (списання коштів)
+    IF NEW.sum < OLD.sum THEN
+        SET @withdraw_amount = OLD.sum - NEW.sum;
+
+        -- Перевіряємо тип картки
+        IF NEW.card_type = 1 THEN
+            -- Дебетова картка: тільки списання з особистих коштів
+            IF OLD.my_money >= @withdraw_amount THEN
+                SET NEW.my_money = OLD.my_money - @withdraw_amount;
+            END IF;
+        ELSE
+            -- Кредитна картка: списання з урахуванням кредитного ліміту
+            IF OLD.my_money >= @withdraw_amount THEN
+                SET NEW.my_money = OLD.my_money - @withdraw_amount; -- Зменшуємо лише особисті кошти
+            ELSE
+                -- Особистих коштів недостатньо
+                SET NEW.my_money = 0; -- Власні кошти списуються повністю
+                SET NEW.credit_limit = OLD.credit_limit - (@withdraw_amount - OLD.my_money); -- Зменшуємо кредитний ліміт
+
+                -- Щоб кредитний ліміт не був від'ємним
+                IF NEW.credit_limit < 0 THEN
+                    SET NEW.credit_limit = 0;
+                END IF;
+            END IF;
+        END IF;
+
+    -- Коли значення поля `sum` збільшується (додавання коштів)
+    ELSEIF NEW.sum > OLD.sum THEN
+        SET @add_amount = NEW.sum - OLD.sum; -- Сума, яку потрібно додати
+
+        -- Перевіряємо тип картки
+        IF NEW.card_type = 1 THEN
+            -- Дебетова картка: тільки додавання до особистих коштів
+            SET NEW.my_money = OLD.my_money + @add_amount;
+        ELSE
+            -- Кредитна картка: обробка кредитного ліміту та особистих коштів
+            SET @full_credit = NEW.credit_limit_full;
+
+            -- Спершу погашаємо кредитний ліміт
+            IF OLD.credit_limit < @full_credit THEN
+                SET @credit_deficit = @full_credit - OLD.credit_limit; -- Скільки бракує до повного відновлення кредитного ліміту
+
+                IF @add_amount <= @credit_deficit THEN
+                    -- Повністю додаємо до кредитного ліміту
+                    SET NEW.credit_limit = OLD.credit_limit + @add_amount;
+                    SET @add_amount = 0;
+                ELSE
+                    -- Частково додаємо до кредитного ліміту, залишок додається до особистих коштів
+                    SET NEW.credit_limit = @full_credit; -- Кредитний ліміт повністю відновлений
+                    SET @add_amount = @add_amount - @credit_deficit;
+                END IF;
+            END IF;
+
+            SET NEW.my_money = OLD.my_money + @add_amount;
+        END IF;
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER update_sum_on_my_money_change
+BEFORE UPDATE ON card_account
+FOR EACH ROW
+BEGIN
+    -- Якщо змінюється my_money, оновлюємо поле sum
+    IF NEW.my_money != OLD.my_money AND NEW.my_money >=0 THEN
+        SET NEW.sum = NEW.my_money + NEW.credit_limit;
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER update_sum_on_credit_limit_change
+BEFORE UPDATE ON card_account
+FOR EACH ROW
+BEGIN
+    -- Якщо змінюється credit_limit, оновлюємо поле sum
+    IF NEW.credit_limit != OLD.credit_limit AND NEW.credit_limit >=0 THEN
+        SET NEW.sum = NEW.my_money + NEW.credit_limit;
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER insert_sum_on_credit_limit_change
+BEFORE INSERT ON card_account
+FOR EACH ROW
+BEGIN
+    -- Якщо змінюється credit_limit, оновлюємо поле sum
+    IF NEW.sum = 0 THEN
+        SET NEW.sum = NEW.my_money + NEW.credit_limit;
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER set_active_status
+BEFORE INSERT ON deposits
+FOR EACH ROW
+BEGIN
+    IF NEW.status IS NULL OR NEW.status = '' THEN
+        SET NEW.status = 'active';
+    END IF;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER validate_insert_card_account_limit
+BEFORE INSERT ON account
+FOR EACH ROW
+BEGIN
+    IF NEW.account_limit > 10000000 AND NEW.account_type = 1  THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Для приватних осіб ліміт не може перевищувати 10000000';
+    END IF;
+END//
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER prevent_delete_active_deposit
+BEFORE DELETE ON deposits
+FOR EACH ROW
+BEGIN
+    IF OLD.status = 'active' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Неможливо видалити активний депозит';
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER validate_card_account_insert
+BEFORE INSERT ON card_account
+FOR EACH ROW
+BEGIN
+    -- Перевірка на негативні значення
+    IF NEW.sum < 0 OR NEW.my_money < 0 OR NEW.credit_limit < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Поле sum, my_money та credit_limit не можуть бути від\'ємними';
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER validate_card_account_update
+BEFORE UPDATE ON card_account
+FOR EACH ROW
+BEGIN
+    -- Перевірка на негативні значення
+    IF NEW.sum < 0 OR NEW.my_money < 0 OR NEW.credit_limit < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Поле sum, my_money та credit_limit не можуть бути від\'ємними';
+    END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE calculate_year_interest()
+BEGIN
+    UPDATE deposits
+    SET amount = CASE
+        WHEN status = 'active' THEN amount + (amount * (CAST(interest_rate AS UNSIGNED) / 100))
+        ELSE amount
+    END;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE EVENT year_update_interest_event
+ON SCHEDULE EVERY 1 YEAR
+DO
+BEGIN
+    -- Викликаємо процедуру для нарахування відсотків
+    CALL calculate_interest();
+END //
+DELIMITER ;

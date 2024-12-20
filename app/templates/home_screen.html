@@ -10,11 +10,10 @@
     <img src="../static/icons/logo.png" alt="Логотип банку" class="logo">
     <h1>еБАНК</h1>
     <div class="menu">
-        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
         <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
-        <a href="{{ url_for('deposits')}}" class="tab-link-fields">депозит</a>
-        <a href="credit_history.html" class="tab-link-fields">кредит</a>
-        <a href="notifications.html"><img src="..\static\icons\bell-icon.png" alt="Сповіщення" class="tab-link-fields-icon"></a>
+        <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
+        <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
@@ -52,97 +51,156 @@
                     <p class="text">{{ transaction.date }} : {{ transaction.transaction_type }} {{ transaction.sum }} {{ transaction.currency }}</p>
                 </div>
             {% else %}
-                <p>Немає транзакцій</p>
+                <p></p>
             {% endfor %}
             {% endfor %}
         </div>
-
-    </div>
-
-    <div class="title-container">
-        <h2 class="transfer">Переказ на картку </h2>
-        <a href="transfer_screen.html"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
-
-        <h2 class="top_up_phone_number">Поповнення мобільного </h2>
-        <a href="refill_phone_screen.html"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></a>
 
     </div>
 
     <div class="main_container">
-        <div class="vidget2">
-            <div class="transfer-container">
-                <input type="text" id="receiver" placeholder="0000 0000 0000 0000">
-                <img src="../static/icons/debit_card.png" alt="Дебетова картка" class="card-icon" />
-                <span id="receiver-error" style="color:red; display:none;">Некоректний номер картки</span>
+        <form class="form_transfer" action="{{ url_for('transfer') }}" method="POST">
+            <div class="title-container">
+                <h2 class="transfer">Переказ на картку </h2>
+                <button type="submit"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></button>
             </div>
+            <div class="vidget2">
+                <div class="transfer-container">
+                    <input type="text" id="receiver" name="receiver" placeholder="0000 0000 0000 0000">
+                    <img src="../static/icons/debit_card.png" alt="Дебетова картка" class="card-icon" />
+                    <span id="receiver-error" style="color:red; display:none;">Некоректний номер картки</span>
+                </div>
 
-            <div class="card-sum-container">
-                <input type="text" id="amount" placeholder="Сума переказу">
-                <img src="../static/icons/dollar.png" alt="Долар" class="dollar-icon" />
-                <span id="amount-error" style="color:red; display:none;">Сума повинна бути від 0 до 1,000,000</span>
+                <div class="card-sum-container">
+                    <input type="text" id="amount" name="amount" placeholder="Сума переказу">
+                    <img src="../static/icons/dollar.png" alt="Долар" class="dollar-icon" />
+                    <span id="amount-error" style="color:red; display:none;">Сума повинна бути від 0 до 1,000,000</span>
+                </div>
             </div>
-        </div>
+        </form>
 
-        <div class="vidget2">
-            <div class="refill-phone-container">
-                <input type="text" placeholder="+(380) 000 00 00 00">
-                <img src="..\static\icons\phone_call.png" alt="Телефон" class="phone-icon" />
+        <form class="form_transfer" action="{{ url_for('refill_phone') }}" method="POST">
+            <div class="title-container">
+                <h2 class="top_up_phone_number">Поповнення мобільного </h2>
+                <button type="submit"><img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow"></button>
             </div>
+            <div class="vidget2">
+                <div class="refill-phone-container">
+                    <input id="phone_number" name="phone_number" type="text" placeholder="+(380) 000 00 00 00">
+                    <img src="..\static\icons\phone_call.png" alt="Телефон" class="phone-icon" />
+                </div>
 
-            <div class="phone-sum-container">
-                <input type="text" placeholder="Сума переказу">
-                <img src="..\static\icons\dollar.png" alt="Долар" class="dollar-icon" />
+                <div class="phone-sum-container">
+                    <input id="phone_sum" name="phone_sum" type="text" placeholder="Сума переказу">
+                    <img src="..\static\icons\dollar.png" alt="Долар" class="dollar-icon" />
+                </div>
             </div>
-        </div>
+        </form>
+
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const receiverInput = document.getElementById('receiver');
             const amountInput = document.getElementById('amount');
+            const phoneNumberInput = document.getElementById('phone_number');
+            const phoneSumInput = document.getElementById('phone_sum');
+            const transferForm = document.querySelector('.form_transfer[action="{{ url_for('transfer') }}"]');
+            const refillForm = document.querySelector('.form_transfer[action="{{ url_for('refill_phone') }}"]');
+
             const receiverError = document.getElementById('receiver-error');
             const amountError = document.getElementById('amount-error');
 
             // Регулярний вираз для Visa та MasterCard
-            const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14})$/;
+            const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[0-9][0-9]{14})$/;
 
-            // Валідація номера картки
-            receiverInput.addEventListener('input', function () {
-                const cardNumber = receiverInput.value.replace(/\s+/g, ''); // Забираємо пробіли
-                if (cardRegex.test(cardNumber)) {
+            // Функція для валідації картки
+            function validateReceiver() {
+                let cardNumber = receiverInput.value.replace(/\D/g, ''); // Видалити нечислові символи
+                const unformattedCard = cardNumber.replace(/\s+/g, '');
+                if (cardRegex.test(unformattedCard)) {
                     receiverError.style.display = 'none';
                     receiverInput.style.borderColor = 'green';
+                    return true;
                 } else {
                     receiverError.style.display = 'inline';
                     receiverInput.style.borderColor = 'red';
+                    return false;
                 }
-            });
+            }
 
-            // Валідація суми переказу
-            amountInput.addEventListener('input', function () {
-                const amount = parseFloat(amountInput.value);
+            // Функція для валідації суми
+            function validateAmount() {
+                const amount = parseFloat(amountInput.value.replace(',', '.'));
                 if (!isNaN(amount) && amount >= 0 && amount <= 1000000) {
                     amountError.style.display = 'none';
                     amountInput.style.borderColor = 'green';
+                    return true;
                 } else {
                     amountError.style.display = 'inline';
                     amountInput.style.borderColor = 'red';
+                    return false;
+                }
+            }
+
+            // Валідація номера телефону
+            function validatePhoneNumber() {
+                const phoneRegex = /^\+380\d{9}$/; // Валідний формат +380XXXXXXXXX
+                const phoneValue = phoneNumberInput.value.replace(/\s+/g, '');
+                if (phoneRegex.test(phoneValue)) {
+                    phoneNumberInput.style.borderColor = 'green';
+                    return true;
+                } else {
+                    phoneNumberInput.style.borderColor = 'red';
+                    return false;
+                }
+            }
+
+            function formatCardNumber(cardNumber) {
+                return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');  // Форматуємо номер картки з пробілами через кожні 4 цифри
+            }
+
+            // Валідація суми поповнення телефону
+            function validatePhoneSum() {
+                const phoneSum = parseFloat(phoneSumInput.value.replace(',', '.'));
+                if (!isNaN(phoneSum) && phoneSum > 0 && phoneSum <= 100000) {
+                    phoneSumInput.style.borderColor = 'green';
+                    return true;
+                } else {
+                    phoneSumInput.style.borderColor = 'red';
+                    return false;
+                }
+            }
+
+            // Додаємо події валідації на `input`
+            receiverInput.addEventListener('input', validateReceiver);
+            amountInput.addEventListener('input', validateAmount);
+            phoneNumberInput.addEventListener('input', validatePhoneNumber);
+            phoneSumInput.addEventListener('input', validatePhoneSum);
+
+            // Перевірка при надсиланні форми "Переказ на картку"
+            transferForm.addEventListener('submit', function (event) {
+                const isReceiverValid = validateReceiver();
+                const isAmountValid = validateAmount();
+
+                if (!isReceiverValid || !isAmountValid) {
+                    event.preventDefault(); // Забороняємо відправку форми
+                    alert('Будь ласка, виправте помилки у формі перед відправленням.');
+                }
+            });
+
+            // Перевірка при надсиланні форми "Поповнення мобільного"
+            refillForm.addEventListener('submit', function (event) {
+                const isPhoneNumberValid = validatePhoneNumber();
+                const isPhoneSumValid = validatePhoneSum();
+
+                if (!isPhoneNumberValid || !isPhoneSumValid) {
+                    event.preventDefault(); // Забороняємо відправку форми
+                    alert('Будь ласка, виправте помилки у формі перед відправленням.');
                 }
             });
         });
-        // Функція для форматування номеру картки
-        function formatCardNumber(cardNumber) {
-            return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
-        }
 
-        // Форматуємо номери карток при завантаженні сторінки
-        document.addEventListener('DOMContentLoaded', function() {
-            const cardNumbers = document.querySelectorAll('.card_number');
-            cardNumbers.forEach(function(cardNumberElement) {
-                let cardNumber = cardNumberElement.innerText;
-                cardNumberElement.innerText = formatCardNumber(cardNumber);
-            });
-        });
     </script>
 </body>
 </html>
