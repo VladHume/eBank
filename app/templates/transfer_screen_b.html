@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\transfer_screen_b_styles.css">
+</head>
+<header class="header_business">
+    <img src="..\static\icons\logo_purple.png" alt="Логотип банку" class="logo">
+    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="home_screen.html" class="tab-link-fields">для приватних осіб</a>
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="client_cabinet.html"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="container">
+        <main class="form-container">
+           
+            <form class="transfer-form" action="check_and_pay_screen.html" method="get">
+                <label for="card_number">З картки</label>
+                <select id="card_number" name="card_number">
+                    <option value="">Оберіть картку</option>
+                    <option value="credit">4441 1110 4340 0049</option>
+                    <option value="debit">4441 1110 5607 7047</option>
+                </select>
+
+                <label for="reciever_card">На картку</label>
+                <p type="text" id="reciever_card" name="reciever_card" placeholder="Введіть номер картки отримувача">{{receiver}}</p>
+
+                <label for="currency">Валюта</label>
+                <select id="currency" name="currency">
+                    <option value="">Оберіть валюту</option>
+                    <option value="credit">USD</option>
+                    <option value="debit">EUR</option>
+                    <option value="debit">UAH</option>
+                </select>
+
+                <label for="sum">Сума переказу</label>
+                <input type="text" id="sum" name="sum" placeholder="Введіть суму">
+
+                <label for="payment_destination">Призначення платежу</label>
+                <input type="text" id="payment_destination" name="payment_destination" placeholder="Введіть призначення">
+
+               
+
+                <button type="submit">Переказати</button>
+            </form>
+        </main>
+    </div>
+    
+    
+</body>
+</html>

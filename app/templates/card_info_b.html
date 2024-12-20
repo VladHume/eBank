@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\card_info_b_styles.css">
+</head>
+<header class="header_business">
+    <img src="..\static\icons\logo_purple.png" alt="Логотип банку" class="logo">
+    <h1> <a href="{{ url_for('home_screen') }}" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
+        <a href="home_screen.html" class="tab-link-fields">для приватних осіб</a>
+        
+        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+       
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="title-container">
+        <h2 class="my_wallet">Моя картка </h2>
+        <a href="javascript:void(0)" onclick="switchCard('next')">
+            <img src="..\static\icons\arrow_icon.png" alt="Навігація" class="tab-link-fields-arrow">
+        </a>
+    </div>
+
+    <div class="main_container">
+        <div class="vidget1">
+            <div class="card-container">
+                <div class="card" id="card">
+                    <p class="bank_name">єБанк</p>
+                    <p class="card_number" id="card-number"></p>
+                </div>
+            </div>
+            <div class="button-container">
+                <button class="green-button" title="Закрити картку" onclick="closeCard(currentCardIndex)">
+                    Закрити картку
+                </button>
+
+                <button class="green-button" title="Додати картку" onclick="window.location.href='{{ url_for('creating_card') }}';">
+                    Додати картку
+                </button>
+
+            </div>
+        </div>
+
+        <div class="vidget2">
+            <p class="text">Тип карти: <span id="card-type"></span></p>
+            <p class="text">Власні кошти: <span id="my-money"></span></p>
+            <p class="text">Залишок: <span id="sum"></span></p>
+            <p class="text">Дата закриття: <span id="expiration-date"></span></p>
+            <p class="text">CVV2: <span id="cvv"></span></p>
+            <p class="text">Кредитний ліміт: <span id="credit-limit"></span></p>
+        </div>
+    </div>
+
+    <script>
+        let currentCardIndex = 0;
+        const cards = {{ cards | tojson }}; // Передаємо список карт з Flask в JavaScript
+
+        function switchCard(direction) {
+            if (direction === 'next') {
+                currentCardIndex = (currentCardIndex + 1) % cards.length; // Переходимо до наступної картки (циклічно)
+            }
+            updateCardInfo();
+        }
+
+        function updateCardInfo() {
+            const card = cards[currentCardIndex]; // Використовуємо поточний індекс картки
+            document.getElementById('card-number').innerText = formatCardNumber(card.credit_number);
+            document.getElementById('card-type').innerText = card.card_type;
+            document.getElementById('my-money').innerText = card.my_money;
+            document.getElementById('sum').innerText = card.sum;
+            document.getElementById('expiration-date').innerText = formatDate(card.exporation_date);
+            document.getElementById('cvv').innerText = card.cvv_code;
+            document.getElementById('credit-limit').innerText = card.credit_limit;
+        }
+
+        function formatCardNumber(cardNumber) {
+            return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');  // Форматуємо номер картки з пробілами через кожні 4 цифри
+        }
+
+        function formatDate(dateString) {
+            // Припускаємо, що дата в форматі YYYY-MM-DD (ISO формат)
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0'); // Додаємо нуль, якщо день менше 10
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Місяць від 0 до 11, тому додаємо 1
+            const year = date.getFullYear(); // Рік
+            return `${day}.${month}.${year}`;
+        }
+
+        function clearCardInfo() {
+            document.getElementById('card-number').innerText = '';
+            document.getElementById('card-type').innerText = '';
+            document.getElementById('my-money').innerText = '';
+            document.getElementById('sum').innerText = '';
+            document.getElementById('expiration-date').innerText = '';
+            document.getElementById('cvv').innerText = '';
+            document.getElementById('credit-limit').innerText = '';
+        }
+
+
+        function closeCard(cardIndex) {
+            const card = cards[cardIndex];
+
+            fetch(`/delete_card/${card.card_account_id}`, {
+                method: 'POST',
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Картку успішно закрито.');
+                    cards.splice(cardIndex, 1); // Видаляємо картку з масиву
+                    if (cards.length === 0) {
+                        alert('У вас більше немає карт.');
+                        clearCardInfo(); // Очищуємо екран
+                        // Перенаправляємо на сторінку додавання картки
+                        window.location.href = "{{ url_for('creating_card') }}";
+                    } else {
+                        currentCardIndex = Math.max(0, cardIndex - 1); // Показуємо наступну картку
+                        updateCardInfo();
+                    }
+                } else {
+                    response.text().then(text => alert(`Помилка: ${text}`));
+                }
+            })
+            .catch(error => {
+                console.error('Помилка:', error);
+                alert('Сталася помилка при закритті картки.');
+            });
+        }
+
+        // Ініціалізуємо відображення даних для першої картки при завантаженні сторінки
+        updateCardInfo();
+    </script>
+</body>
+</html>
