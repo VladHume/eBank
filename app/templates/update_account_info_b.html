@@ -69,9 +69,8 @@
     <img src="..\static\icons\logo_purple.png" alt="Логотип банку" class="logo">
     <h1> <a href="{{ url_for('home_screen') }}" class="ebank-field">еБАНК - БАНК ТВОЇХ МОЖЛИВОСТЕЙ</a></h1>
     <div class="menu">
-        <a href="exchange_rates.html" class="tab-link-fields">курс валют</a>
-        <a href="home_screen.html" class="tab-link-fields">для приватних осіб</a>
-        <a href="credit_history.html" class="tab-link-fields">кредит</a>
+        <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
+        <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
     </div>
 </header>
@@ -108,7 +107,5 @@
             </form>
         </main>
     </div>
-    
-    
 </body>
 </html>

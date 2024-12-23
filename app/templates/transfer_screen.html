@@ -9,10 +9,9 @@
 </head>
 <header class="header">
     <img src="../static/icons/logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
         <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
-        <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
         <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
         <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
@@ -31,7 +30,7 @@
                 </select>
 
                 <label for="receiver_card">На картку</label>
-                <input type="text" id="receiver_card" name="receiver_card" placeholder="Введіть номер картки отримувача" value="{{receiver or ''}}">
+                <input type="text" id="receiver_card" name="receiver_card" placeholder="Введіть номер картки отримувача" value="{{receiver or ''}}" oninput="formatCardNumber()">
 
                 <label for="sum">Сума переказу</label>
                 <input type="text" id="sum" name="sum" placeholder="Введіть суму" value="{{amount or ''}}">
@@ -48,38 +47,46 @@
 
 <!-- Файл transfer_form_validation.js -->
 <script>
-function validateForm() {
-    const cardNumber = document.getElementById('card_number').value;
-    const receiverCard = document.getElementById('receiver_card').value; // виправлено 'reciever_card' на 'receiver_card'
-    const sum = document.getElementById('sum').value;
-    const paymentDestination = document.getElementById('payment_destination').value;
-
-    // Перевірка заповнення полів
-    if (cardNumber == "" || !receiverCard || !sum || !paymentDestination) {
-        alert('Будь ласка, заповніть всі поля!');
-        return false;
+    function formatCardNumber() {
+        const receiverCard = document.getElementById('receiver_card');
+        let value = receiverCard.value.replace(/\D/g, ''); // Видаляти все нецифрове
+        value = value.replace(/(\d{4})(?=\d)/g, '$1 '); // Додавати пробіл кожні 4 цифри
+        receiverCard.value = value;
     }
 
-    // Перевірка формату картки отримувача
-    const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[0-9][0-9]{14})$/;
-    if (!cardRegex.test(receiverCard)) {
-        alert('Номер картки отримувача має бути у форматі Visa або MasterCard.');
-        return false;
+    function validateForm() {
+        const cardNumber = document.getElementById('card_number').value;
+        const receiverCard = document.getElementById('receiver_card').value.replace(/\s+/g, ''); // Видалити пробіли для валідації
+        const sum = document.getElementById('sum').value;
+        const paymentDestination = document.getElementById('payment_destination').value;
+
+        // Перевірка заповнення полів
+        if (cardNumber == "" || !receiverCard || !sum || !paymentDestination) {
+            alert('Будь ласка, заповніть всі поля!');
+            return false;
+        }
+
+        // Перевірка формату картки отримувача
+        const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[0-9][0-9]{14})$/;
+        if (!cardRegex.test(receiverCard)) {
+            alert('Номер картки отримувача має бути у форматі Visa або MasterCard.');
+            return false;
+        }
+
+        // Перевірка діапазону суми
+        const amount = parseFloat(sum);
+        if (isNaN(amount) || amount <= 0 || amount > 1000000) {
+            alert('Сума має бути у діапазоні від 0 до 1,000,000.');
+            return false;
+        }
+
+        // Перевірка довжини призначення платежу
+        if (paymentDestination.length > 200) {
+            alert('Призначення платежу не може перевищувати 200 символів.');
+            return false;
+        }
+
+        return true;
     }
 
-    // Перевірка діапазону суми
-    const amount = parseFloat(sum);
-    if (isNaN(amount) || amount <= 0 || amount > 1000000) {
-        alert('Сума має бути у діапазоні від 0 до 1,000,000.');
-        return false;
-    }
-
-    // Перевірка довжини призначення платежу
-    if (paymentDestination.length > 200) {
-        alert('Призначення платежу не може перевищувати 200 символів.');
-        return false;
-    }
-
-    return true;
-}
 </script>

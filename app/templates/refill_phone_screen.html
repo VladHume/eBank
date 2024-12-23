@@ -34,10 +34,9 @@
 </head>
 <header class="header">
     <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
-    <h1> <a href="home_screen.html" class="ebank-field">еБАНК</a></h1>
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
     <div class="menu">
         <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
-        <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
         <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
         <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>

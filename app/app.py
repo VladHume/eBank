@@ -930,7 +930,7 @@ def exchange_rates():
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if request.method == 'POST':
-        receiver = request.form.get('receiver', '')  # Credit number of the receiver
+        receiver = request.form.get('receiver', '').replace(' ', '')  # Credit number of the receiver
         amount = request.form.get('amount', '')
         user_id = session.get('user_id')
 
@@ -1025,7 +1025,7 @@ def transfer():
 def check_and_pay():
     if request.method == 'POST':
         card_number = request.form.get('card_number')
-        receiver_card = request.form.get('receiver_card')
+        receiver_card = request.form.get('receiver_card').replace(' ', '')
         sum = request.form.get('sum')
         payment_destination = request.form.get('payment_destination')
         user_id = session.get('user_id')
@@ -1104,7 +1104,7 @@ def refill_phone():
             # Отримання інформації про карткові акаунти з таблиці card_account
             cursor.execute("""
                         SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
-                        FROM card_account WHERE account_id IN %s
+                        FROM card_account WHERE account_id = %s
                     """, (tuple(account_ids),))
             cards = cursor.fetchall()
 
@@ -1122,7 +1122,7 @@ def refill_phone():
                     "exporation_date": card[5],
                     "cvv_code": card[6]
                 }
-            card_list.append(card_info)
+                card_list.append(card_info)
 
             return render_template('refill_phone_screen.html', cards=card_list, phone_number=phone_number, phone_sum=phone_sum)
 
@@ -1167,7 +1167,7 @@ def create_refill_phone():
 
             if not sum:
                 flash("Щось не так з балансом", 'error')
-                return redirect(url_for('deposits'))
+                return redirect(url_for('refill_phone'))
 
             # Отримання курсу для конвертації у гривні
             cursor.execute(
@@ -1178,7 +1178,7 @@ def create_refill_phone():
 
             if not conversion:
                 flash("Курс валют не знайдено", 'error')
-                return redirect(url_for('deposits'))
+                return redirect(url_for('refill_phone'))
 
             sales_rate = conversion[0]
 
@@ -1186,7 +1186,7 @@ def create_refill_phone():
 
             if sum[0] < int(sum_uah):
                 flash("На картці недостатньо коштів", 'error')
-                return redirect(url_for('deposits'))
+                return redirect(url_for('refill_phone'))
 
             # Оновлення балансу картки
             cursor.execute(
@@ -1230,7 +1230,7 @@ def pay():
     if request.method == 'POST':
         card_account = int(request.form.get('card_account'))  # ID картки відправника
         receiver_full_name = request.form.get('receiver_full_name')  # ПІБ отримувача
-        receiver_card = request.form.get('receiver_card')
+        receiver_card = request.form.get('receiver_card').replace(' ', '')
         destination = request.form.get('destination')  # Призначення платежу
         sum_uah = int(request.form.get('sum'))  # Сума в гривнях
         try:

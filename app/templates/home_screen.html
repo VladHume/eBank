@@ -11,7 +11,6 @@
     <h1>еБАНК</h1>
     <div class="menu">
         <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
-        <a href="for_business_screen.html" class="tab-link-fields">для бізнесу</a>
         <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
         <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
         <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
@@ -113,6 +112,7 @@
 
             // Регулярний вираз для Visa та MasterCard
             const cardRegex = /^(?:4[0-9]{12}(?:[0-9]{3})?|5[0-9][0-9]{14})$/;
+
 
             // Функція для валідації картки
             function validateReceiver() {
