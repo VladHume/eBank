@@ -427,6 +427,7 @@ DELIMITER ;
 DELIMITER //
 CREATE EVENT year_update_interest_event
 ON SCHEDULE EVERY 1 YEAR
+STARTS CURRENT_TIMESTAMP
 DO
 BEGIN
     -- Викликаємо процедуру для нарахування відсотків
