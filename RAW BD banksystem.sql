@@ -38,7 +38,7 @@ CREATE TABLE card_account(
 	credit_number 	VARCHAR(16),
 	card_type	INT,
     payment_system_id INT,
-	sum INT DEFAULT 100000,
+	sum INT,
 	my_money INT,
 	exporation_date DATETIME,
 	cvv_code VARCHAR(3),
@@ -85,23 +85,6 @@ CREATE TABLE private(
 	PRIMARY KEY(private_id)
 );
 
-CREATE TABLE business(
-	business_id INT NOT NULL AUTO_INCREMENT,
-	account_id INT,
-	balance INT,
-	business_name VARCHAR(50),
-	account_manager_id INT,
-	PRIMARY KEY(business_id)
-);
-
-CREATE TABLE managers(
-	manager_id INT NOT NULL AUTO_INCREMENT,
-	surname		VARCHAR(50),
-    `name`		VARCHAR(50),
-    patronymic	VARCHAR(50),
-	PRIMARY KEY(manager_id)
-);
-
 CREATE TABLE quarantors(
 	quarantor_id INT NOT NULL AUTO_INCREMENT,
 	surname		VARCHAR(50),
@@ -115,23 +98,14 @@ CREATE TABLE credit(
 	credit_id  INT NOT NULL AUTO_INCREMENT,
 	client_id INT,
 	sum INT,
+    amount_repaid INT,
 	payment_day	DATETIME,
-	interest_rate VARCHAR(50), -- не зрозуміло який тип для стовпця
+	interest_rate INT,
 	quarantor_id INT,
 	status VARCHAR(50),
-	currency INT,
 	PRIMARY KEY(credit_id)
 );
 
-CREATE TABLE credit_history(
-	credit_history_id INT NOT NULL AUTO_INCREMENT,
-	client_id	INT,
-    credit_id	INT,
-    payment_day	DATETIME,
-	amount_repaid INT,
-	status VARCHAR(50),
-	PRIMARY KEY(credit_history_id)
-);
 CREATE TABLE credit_limit_history(
 	limit_id INT NOT NULL AUTO_INCREMENT,
 	limit_amount INT,
@@ -202,12 +176,6 @@ ADD CONSTRAINT FK_CreditGuarantor FOREIGN KEY (quarantor_id) REFERENCES quaranto
 ALTER TABLE credit
 ADD CONSTRAINT FK_CreditClient FOREIGN KEY (client_id) REFERENCES client (client_id); -- ON DELETE SET NULL;
 
--- credit_history
-ALTER TABLE credit_history
-ADD CONSTRAINT FK_CreditHClient FOREIGN KEY (client_id) REFERENCES client (client_id)  ON DELETE CASCADE;
-ALTER TABLE credit_history
-ADD CONSTRAINT FK_CreditHCredit FOREIGN KEY (credit_id) REFERENCES credit (credit_id) ON DELETE CASCADE;
-
 -- credit_limit_history
 ALTER TABLE credit_limit_history
 ADD CONSTRAINT FK_CreditLHCAccount FOREIGN KEY (card_account_id) REFERENCES card_account (card_account_id)  ON DELETE CASCADE;
@@ -219,12 +187,6 @@ ADD CONSTRAINT FK_DepoisitsCard FOREIGN KEY (client_id) REFERENCES client (clien
 -- private
 ALTER TABLE private
 ADD CONSTRAINT FK_PrivateAccount FOREIGN KEY (account_id) REFERENCES account (account_id)  ON DELETE CASCADE;
-
--- business
-ALTER TABLE business
-ADD CONSTRAINT FK_BussinessAccount FOREIGN KEY (account_id)REFERENCES account (account_id)  ON DELETE CASCADE;
-ALTER TABLE business
-ADD CONSTRAINT FK_BussinessManager FOREIGN KEY (account_manager_id) REFERENCES managers (manager_id) ON DELETE SET NULL;
 
 -- transaction
 ALTER TABLE transaction
@@ -250,8 +212,7 @@ VALUES
 
 INSERT INTO account_types (type)
 VALUES
-    ('Приватний'),
-    ('Бізнес');
+    ('Приватний');
 
 
 DELIMITER //

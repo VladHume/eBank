@@ -18,27 +18,14 @@
 </header>
 <body>
     <div class="transactions-container">
-        <p class="transactions-text">Транзакції карти <span style="font-family: 'Courier New', Courier, monospace;">4441 1110 5289 4789</span></p>        
-        <div class="transaction">
-            <p class="transaction-text">Оплата сеансу психолога</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-
-        <div class="transaction">
-            <p class="transaction-text">Повний чек-ап організму в ОксфордМедікал</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-        <div class="transaction">
-            <p class="transaction-text">Новорічні гноми з юска</p>
-            <button class="image-button">
-                <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-            </button>
-        </div>
-
-        
+        <p class="transactions-text">Транзакції карти <span style="font-family: 'Courier New', Courier, monospace;"> {{ card_number }}</span></p>
+        {% for t in transaction_list %}
+            <div class="transaction">
+                <p class="transaction-text">{{t.payment_destination}}</p>
+                <button class="image-button">
+                    <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
+                </button>
+            </div>
+        {% endfor %}
 
     </div>

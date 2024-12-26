@@ -1334,11 +1334,267 @@ def pay():
 
 @app.route('/credit_history')
 def credit_history():
-    return render_template('credit_history.html')
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+
+    # Отримання client_id з таблиці client
+    cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+    client = cursor.fetchone()
+    if not client:
+        flash("Клієнт не знайдений", 'error')
+        return redirect(url_for('home_screen'))
+
+    client_id = client[0]
+    cursor.execute("""SELECT c.sum, c.amount_repaid, c.status
+    FROM credit c
+    WHERE client_id = %s""", (client_id,))
+    credits = cursor.fetchall()
+    return render_template('credit_history.html', credits=credits)
 
 @app.route('/take_credit')
 def take_credit():
-    return render_template('credit.html')
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('login'))
+    try:
+        cursor = mysql.connection.cursor()
+
+        # Отримання client_id з таблиці client
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            flash("Клієнт не знайдений", 'error')
+            return redirect(url_for('home_screen'))
+
+        client_id = client[0]
+
+        # Отримання акаунтів типу 1 з таблиці account
+        cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
+        accounts = cursor.fetchall()
+
+        if not accounts:
+            flash("Акаунти не знайдені", 'error')
+            return redirect(url_for('home_screen'))
+
+        account_ids = [account[0] for account in accounts]
+
+        # Отримання інформації про карткові акаунти з таблиці card_account
+        cursor.execute("""
+                    SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                    FROM card_account WHERE account_id = %s
+                """, (tuple(account_ids),))
+        cards = cursor.fetchall()
+
+        if not cards:
+            return redirect(url_for('creating_card'))
+
+        card_list = []
+        for card in cards:
+            card_info = {
+                "card_account_id": card[0],
+                "credit_number": card[1],
+                "my_money": card[2],
+                "sum": card[3],
+                "credit_limit": card[4],
+                "exporation_date": card[5],
+                "cvv_code": card[6]
+            }
+            card_list.append(card_info)
+
+        return render_template('credit.html', cards=card_list)
+
+    except Exception as e:
+        flash(f"Помилка: {e}", 'error')
+        return redirect(url_for('take_credit'))
+
+
+@app.route('/credit', methods=['GET', 'POST'])
+def credit():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        if not user_id:
+            flash("Користувач не авторизований", 'error')
+            return redirect(url_for('login'))
+
+        cursor = mysql.connection.cursor()
+
+        # Отримання client_id з таблиці client
+        cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+        client = cursor.fetchone()
+        if not client:
+            flash("Клієнт не знайдений", 'error')
+            return redirect(url_for('home_screen'))
+
+        client_id = client[0]
+        sum = int(request.form.get('sum'))
+        deadline = request.form.get('deadline')
+        guarantor_surname = request.form.get('guarantor_surname')
+        guarantor_name = request.form.get('guarantor_name')
+        guarantor_patronymic = request.form.get('guarantor_patronymic')
+        guarantor_address = request.form.get('guarantor_address')
+        card_number = request.form.get('card_number')
+        interest_rate = request.form.get('interest_rate')
+
+        cursor.execute("SELECT sum FROM card_account WHERE card_account_id = %s", (card_number,))
+        current_sum = cursor.fetchone()
+        if not current_sum:
+            flash("Щось не так з сумою", 'error')
+            return redirect(url_for('take_credit'))
+
+
+        # Вставка даних у таблицю quarantors
+        cursor.execute("""
+            INSERT INTO quarantors (surname, `name`, patronymic, address)
+            VALUES (%s, %s, %s, %s)
+        """, (guarantor_surname, guarantor_name, guarantor_patronymic, guarantor_address))
+
+        quarantor_id = cursor.lastrowid
+
+        # Вставка даних у таблицю credit
+        cursor.execute("""
+            INSERT INTO credit (client_id, sum, amount_repaid, payment_day, interest_rate, quarantor_id, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (client_id, sum, 0, deadline, interest_rate, quarantor_id, 'Активний'))
+        credit_id = cursor.lastrowid
+
+        cursor.execute("""SELECT curr_id FROM card_account WHERE card_account_id = %s""", (card_number,))
+        curr_id = cursor.fetchone()
+
+        cursor.execute(
+            "SELECT sales_rate FROM currency_conversion WHERE currency_id = %s",
+            (curr_id,)
+        )
+        conversion = cursor.fetchone()
+
+        if not conversion:
+            flash("Курс валют не знайдено", 'error')
+            return redirect(url_for('deposits'))
+
+        sales_rate = conversion[0]
+        sum = sum/sales_rate
+        # Оновлення балансу картки
+        new_sum = current_sum[0] + sum
+        cursor.execute("UPDATE card_account SET sum = %s WHERE card_account_id = %s", (new_sum, card_number))
+        cursor.execute("""SELECT payment_system_id FROM card_account WHERE card_account_id = %s""", (card_number,))
+        payment_system_id = cursor.fetchone()
+
+        transaction_data = {
+            "sum": sum,
+            "payer_id": 0,
+            "receiver_id": card_number,
+            "status": "Completed",
+            "payment_system_id": payment_system_id[0],  # Значення за замовчуванням
+            "currency": curr_id[0],
+            "payment_destination": "Надходження кредитних коштів за кредитом №" + str(credit_id)
+        }
+        # Виклик функції для створення транзакції безпосередньо
+        create_transaction_response = create_transaction_internal(transaction_data)
+        if create_transaction_response.get("error"):
+            raise Exception(create_transaction_response["error"])
+
+        mysql.connection.commit()
+        cursor.close()
+
+        flash("Кредит успішно додано", 'success')
+        return redirect(url_for('credit_history'))
+
+    return redirect(url_for('home_screen'))
+
+
+@app.route('/card_transaction', methods=['GET', 'POST'])
+def card_transaction():
+    card_number = request.args.get('card_number')
+    card = card_number
+    user_id = session.get('user_id')
+    if not user_id:
+        return "Користувач не авторизований", 401
+
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute(""" SELECT card_account_id
+        FROM card_account
+        WHERE credit_number = %s""", (card_number,))
+        card_number = cursor.fetchone()
+
+        cursor.execute("""
+                    SELECT t.sum, t.date, t.status, t.payer_id, t.receiver_id, t.currency, t.payment_destination, t.transaction_id
+                    FROM transaction t
+                    WHERE t.receiver_id = %s OR t.payer_id = %s
+                    ORDER BY t.transaction_id DESC
+                """, (card_number, card_number))
+
+        transactions = cursor.fetchall()
+
+        transaction_list = []
+
+        for t in transactions:
+            # Якщо ми відправляємо гроші самому собі (payer_id = receiver_id), додаємо дві транзакції
+            if t[3] == t[4]:
+                # Перша транзакція - надходження
+                cursor.execute("""
+                        SELECT c.name
+                        FROM currency_conversion c
+                        WHERE currency_id = %s""", (t[5],))
+                currency_name = cursor.fetchone()
+                currency_name = currency_name[0] if currency_name else "Невідома валюта"
+
+                transaction_info = {
+                    "sum": t[0],
+                    "date": t[1],
+                    "currency": currency_name,
+                    "transaction_type": '+',
+                    "status": t[2],
+                    "payer_id": t[3],
+                    "receiver_id": t[4],
+                    "payment_destination": t[6],
+                    "transaction_id": t[7]
+                }
+                transaction_list.append(transaction_info)
+
+                transaction_info = {
+                    "sum": t[0],
+                    "date": t[1],
+                    "currency": currency_name,
+                    "transaction_type": '-',
+                    "status": t[2],
+                    "payer_id": t[3],
+                    "receiver_id": t[4],
+                    "payment_destination": t[6],
+                    "transaction_id": t[7]
+                }
+                transaction_list.append(transaction_info)
+            else:
+                # Якщо payer_id і receiver_id різні, додаємо звичайну транзакцію
+                transaction_type = '+' if t[4] == card_number else '-'
+
+                cursor.execute("""
+                        SELECT c.name
+                        FROM currency_conversion c
+                        WHERE currency_id = %s""", (t[5],))
+                currency_name = cursor.fetchone()
+                currency_name = currency_name[0] if currency_name else "Невідома валюта"
+
+                transaction_info = {
+                    "sum": t[0],
+                    "date": t[1],
+                    "currency": currency_name,
+                    "transaction_type": transaction_type,
+                    "status": t[2],
+                    "payer_id": t[3],
+                    "receiver_id": t[4],
+                    "payment_destination": t[6],
+                    "transaction_id": t[7]
+                }
+                transaction_list.append(transaction_info)
+
+
+        return render_template('card_transactions.html', card_number=card, transaction_list=transaction_list)
+    except Exception as e:
+        return f"Помилка: {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -40,7 +40,11 @@
                 <button class="green-button" title="Додати картку" onclick="window.location.href='{{ url_for('creating_card') }}';">
                     Додати картку
                 </button>
-
+            </div>
+            <div class="button-container" style="margin-top: 10px">
+                <button class="green-button" title="Переглянути транзакції картки" onclick="viewCardTransactions()" >
+                    Переглянути транзакції картки
+                </button>
             </div>
         </div>
 
@@ -79,6 +83,12 @@
         function formatCardNumber(cardNumber) {
             return cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');  // Форматуємо номер картки з пробілами через кожні 4 цифри
         }
+
+        function viewCardTransactions() {
+            const cardNumber = cards[currentCardIndex].credit_number; // Отримуємо номер картки
+            window.location.href = `/card_transaction?card_number=${encodeURIComponent(cardNumber)}`; // Переходимо на сторінку
+        }
+
 
         function formatDate(dateString) {
             // Припускаємо, що дата в форматі YYYY-MM-DD (ISO формат)
