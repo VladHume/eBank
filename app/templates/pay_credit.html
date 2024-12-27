@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>еБАНК - Банк твоїх можливостей</title>
+    <link rel="stylesheet" href="..\static\styles\transfer_screen_styles.css">
+    <script>
+        function validateForm(event) {
+            event.preventDefault(); // Зупинити стандартну відправку форми
+            const cardNumber = document.getElementById("card_number").value;
+            const sum = document.getElementById("sum").value;
+            if (!cardNumber) {
+                alert("Будь ласка, оберіть картку.");
+                return false;
+            }
+
+
+            if (!sum || isNaN(sum) || sum < 5) {
+                alert("Сума повинна бути числом від 5 грн.");
+                return false;
+            }
+
+            event.target.submit(); // Якщо всі перевірки пройдено, відправити форму
+        }
+    </script>
+</head>
+<header class="header">
+    <img src="..\static\icons\logo.png" alt="Логотип банку" class="logo">
+    <h1> <a href="{{url_for('home_screen')}}" class="ebank-field">еБАНК</a></h1>
+    <div class="menu">
+        <a href="{{url_for('exchange_rates')}}" class="tab-link-fields">курс валют</a>
+        <a href="{{url_for('deposits')}}" class="tab-link-fields">депозит</a>
+        <a href="{{url_for('credit_history')}}" class="tab-link-fields">кредит</a>
+        <a href="{{ url_for('client_cabinet') }}"><img src="..\static\icons\user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
+    </div>
+</header>
+<body>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        <main class="form-container">
+            <form class="transfer-form" action="{{url_for('pay_for_credit')}}" method="POST" onsubmit="validateForm(event)">
+                <label for="surname">З картки</label>
+                <select id="card_number" name="card_number">
+                    <option value="">Оберіть картку</option>
+                    {% for card in cards %}
+                        <option value="{{ card.card_account_id }}" id="card-account-id">{{ card.credit_number }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="surname">Кредит для погашення</label>
+                <select id="credit_id" name="credit_id">
+                    <option value="">Оберіть кредит для погашення</option>
+                    {% for c in credit %}
+                        <option value="{{ c[0] }}" id="credit">{{c[2]}}/{{c[1]}} грн</option>
+                    {% endfor %}
+                </select>
+
+                <label for="sum">Сума погашення</label>
+                <input type="text" id="sum" name="sum" placeholder="Введіть суму" value="{{ phone_sum or '' }}">
+
+                <button type="submit">Погасити</button>
+            </form>
+        </main>
+    </div>
+</body>
+</html>
