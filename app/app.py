@@ -1437,7 +1437,7 @@ def credit():
         guarantor_patronymic = request.form.get('guarantor_patronymic')
         guarantor_address = request.form.get('guarantor_address')
         card_number = request.form.get('card_number')
-        interest_rate = request.form.get('interest_rate')
+        interest_rate = request.form.get('interest-rate')
 
         cursor.execute("SELECT sum FROM card_account WHERE card_account_id = %s", (card_number,))
         current_sum = cursor.fetchone()

@@ -74,8 +74,11 @@
             if (sum > 50000) interestRate += 4;
             if (timeInYears > 2) interestRate += 6;
 
-            const interestDisplay = document.getElementById("interest-rate");
-            interestDisplay.textContent = `Відсоткова ставка: ${interestRate.toFixed(2)}%`;
+            const interestDisplay = document.getElementById("interest-rate-display");
+            const interestField = document.getElementById("interest-rate");
+
+            interestDisplay.textContent = `${interestRate.toFixed(2)}`;
+            interestField.value = interestRate.toFixed(2); // Оновлення прихованого поля
         }
     </script>
 </head>
@@ -90,7 +93,6 @@
             <a href="{{ url_for('client_cabinet') }}"><img src="../static/icons/user.png" alt="Особистий кабінет" class="tab-link-fields-icon"></a>
         </div>
     </header>
-
 
     <div class="container">
         <main class="form-container">
@@ -115,7 +117,9 @@
                     {% endfor %}
                 </select>
 
-                <span id="interest-rate">Відсоткова ставка: 15.00%</span>
+                <span>Відсоткова ставка: <span id="interest-rate-display">15.00</span>%</span>
+                <input type="hidden" id="interest-rate" name="interest-rate" value="15.00">
+
                 <button type="submit">Продовжити</button>
             </form>
         </main>
