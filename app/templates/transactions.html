@@ -23,10 +23,11 @@
             {% for transaction in card.transactions %}
                 <div class="transaction">
                     <p class="transaction-text">{{transaction.payment_destination}} {{transaction.transaction_type}} {{transaction.sum}} {{transaction.currency}}</p>
-                    <button class="image-button">
+                    <a href="{{ url_for('transaction_pdf', transaction_id=transaction.transaction_id) }}" class="image-button">
                         <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
-                    </button>
+                    </a>
                 </div>
+
             {% endfor %}
         {% endfor %}
         

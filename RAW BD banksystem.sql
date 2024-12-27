@@ -62,7 +62,7 @@ CREATE TABLE currency_conversion(
 CREATE TABLE transaction(
 	transaction_id  INT NOT NULL AUTO_INCREMENT,
 	sum INT,
-	date DATE,
+	date DATETIME,
 	payer_id INT,
 	receiver_id INT,
 	status VARCHAR(50),

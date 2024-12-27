@@ -1,7 +1,8 @@
-
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+import pdfkit
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from flask_mysqldb import MySQL
 from datetime import datetime
+from tempfile import NamedTemporaryFile
 import random
 
 app = Flask(__name__)
@@ -741,7 +742,7 @@ def create_transaction_internal(data):
         status = data.get('status', 'Pending')
         payment_system_id = data['payment_system_id']
         currency = data['currency']
-        payment_destination =  data['payment_destination']
+        payment_destination = data['payment_destination']
 
         # Перетворення типів для коректного внесення в базу
         sum = int(sum)
@@ -751,7 +752,7 @@ def create_transaction_internal(data):
         currency = int(currency)
 
         # Поточна дата
-        date = datetime.now().strftime('%Y-%m-%d')
+        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # Додавання транзакції в базу
         cursor = mysql.connection.cursor()
@@ -1668,7 +1669,6 @@ def pay_credit():
 
     return render_template('pay_credit.html', credit=credits, cards=card_list)
 
-
 @app.route('/pay_for_credit', methods=['GET', 'POST'])
 def pay_for_credit():
     if request.method == 'POST':
@@ -1756,6 +1756,97 @@ def pay_for_credit():
     # Для методу GET повертаємо форму
     return render_template('credit_history.html')
 
+config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+
+@app.route('/transaction_pdf/<transaction_id>')
+def transaction_pdf(transaction_id):
+    transaction_data = get_transaction_data(transaction_id)
+
+    html_content = render_template('transaction_template.html', transaction=transaction_data)
+
+    with NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+        pdfkit.from_string(html_content, temp_pdf.name, configuration=config)
+
+        temp_pdf.seek(0)
+
+        filename = f"transaction_{transaction_id}.pdf"
+
+        return send_file(
+            temp_pdf.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
+
+def get_transaction_data(transaction_id):
+    try:
+        # Отримання з'єднання з базою
+        cursor = mysql.connection.cursor()
+
+        # Виконання запиту для отримання транзакції за transaction_id
+        cursor.execute("""
+            SELECT transaction_id, sum, date, payer_id, receiver_id, status, 
+                   payment_destination, payment_system_id, currency 
+            FROM transaction 
+            WHERE transaction_id = %s
+        """, (transaction_id,))
+
+        # Отримання результату
+        transaction = cursor.fetchone()
+
+        # Якщо транзакція не знайдена
+        if transaction is None:
+            return {"error": "Транзакцію не знайдено"}
+
+        cursor.execute("""SELECT name FROM payment_systems WHERE payment_system_id = %s""", (transaction[7],))
+        payment_system = cursor.fetchone()[0]
+
+        cursor.execute("""SELECT name FROM currency_conversion WHERE currency_id = %s""", (transaction[8],))
+        curr_id = cursor.fetchone()[0]
+
+        payer_id = "Невідомий"
+        if transaction[3] == 0:
+            payer_id = "єБанк"
+        if transaction[3] != 0:
+            cursor.execute("""SELECT account_id FROM card_account WHERE card_account_id = %s""", (transaction[3],))
+            payer = cursor.fetchone()[0]
+            if payer:
+                cursor.execute("""SELECT client_id FROM account WHERE account_id = %s""", (payer,))
+                client_id = cursor.fetchone()[0]
+                cursor.execute("""SELECT surname, name, patronymic FROM client WHERE client_id = %s""", (client_id,))
+                snp = cursor.fetchone()
+                payer_id = str(snp[0]) + ' ' + str(snp[1]) + ' ' + str(snp[2])
+
+        receiver_id = "Невідомий"
+        if transaction[4] == 0:
+            receiver_id = "єБанк"
+        if transaction[4] != 0:
+            cursor.execute("""SELECT account_id FROM card_account WHERE card_account_id = %s""", (transaction[4],))
+            receiver = cursor.fetchone()[0]
+            if receiver:
+                cursor.execute("""SELECT client_id FROM account WHERE account_id = %s""", (receiver,))
+                client_id = cursor.fetchone()[0]
+                cursor.execute("""SELECT surname, name, patronymic FROM client WHERE client_id = %s""", (client_id,))
+                snp = cursor.fetchone()
+                receiver_id = str(snp[0]) + ' ' + str(snp[1]) + ' ' + str(snp[2])
+        # Формуємо словник з отриманими даними
+        transaction_data = {
+            "transaction_id": transaction[0],
+            "sum": transaction[1],
+            "date": transaction[2],
+            "payer_id": payer_id,
+            "receiver_id": receiver_id,
+            "status": transaction[5],
+            "payment_destination": transaction[6],
+            "payment_system_id": payment_system,
+            "currency": curr_id
+        }
+
+        return transaction_data
+
+    except Exception as e:
+        # У випадку помилки
+        return {"error": str(e)}
 
 if __name__ == '__main__':
     app.run(debug=True)

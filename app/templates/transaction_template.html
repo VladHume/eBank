@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Транзакція</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        color: #333;
+    }
+
+    .container {
+        width: 80%;
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    header h1 {
+        font-size: 24px;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #0044cc;
+    }
+
+    .transaction-details {
+        margin: 20px 0;
+    }
+
+    .transaction-details h2 {
+        font-size: 20px;
+        text-align: center;
+        margin-bottom: 15px;
+        color: #222;
+    }
+
+    .transaction-details ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .transaction-details li {
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+
+    footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><strong>єБанк</strong></h1>
+    </header>
+    <main>
+      <section class="transaction-details">
+        <h2>Транзакція #{{transaction.transaction_id}}</h2>
+        <ul>
+          <li><strong>Сума:</strong> {{transaction.sum}} {{transaction.currency}}</li>
+          <li><strong>Дата:</strong> {{transaction.date}}</li>
+          <li><strong>Платник:</strong> {{transaction.payer_id}}</li>
+          <li><strong>Одержувач:</strong> {{transaction.receiver_id}}</li>
+          <li><strong>Статус:</strong> {{transaction.status}}</li>
+          <li><strong>Місце призначення:</strong> {{transaction.payment_destination}}</li>
+          <li><strong>Платіжна система:</strong> {{transaction.payment_system_id}}</li>
+        </ul>
+      </section>
+      <footer>
+        <p>Дякуємо за вашу транзакцію!</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
