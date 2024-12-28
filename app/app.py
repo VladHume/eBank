@@ -1349,7 +1349,7 @@ def credit_history():
         return redirect(url_for('home_screen'))
 
     client_id = client[0]
-    cursor.execute("""SELECT c.sum, c.amount_repaid, c.status
+    cursor.execute("""SELECT c.sum, c.amount_repaid, c.status, c.credit_id
     FROM credit c
     WHERE client_id = %s""", (client_id,))
     credits = cursor.fetchall()
@@ -1917,7 +1917,6 @@ def get_transactions_last_30_days(card_id):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
 
-        # Execute SQL query to get transactions for the last 30 days
         cursor.execute("""
             SELECT transaction_id, date, sum, payer_id, receiver_id, 
                    payment_destination, payment_system_id, currency, status
@@ -1961,6 +1960,68 @@ def get_transactions_last_30_days(card_id):
     except Exception as e:
         # Handle any errors
         return {"error": str(e), "transactions": [], "start_date": start_date, "end_date": end_date}
+
+@app.route('/credit_info/<credit_id>')
+def credit_info(credit_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("""SELECT c.sum, c.amount_repaid, c.status, c.credit_id, c.interest_rate, c.status, c.payment_day, c.quarantor_id
+        FROM credit c
+        WHERE credit_id = %s""", (credit_id,))
+    credit = cursor.fetchone()
+
+    cursor.execute("""SELECT q.surname, q.name, q.patronymic, q.address FROM quarantors q WHERE quarantor_id = %s""", (credit[7],))
+    guarantor = cursor.fetchone()
+    return render_template('take_a_credit.html', credit=credit, guarantor=guarantor)
+
+@app.route('/credit_pdf/<int:credit_id>', methods=['POST'])
+def credit_pdf(credit_id):
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+    cursor.execute("""SELECT surname, name, patronymic FROM client WHERE user_id =  %s""", (user_id,))
+    snp = cursor.fetchone()
+
+    cursor.execute("""SELECT payment_day FROM credit WHERE credit_id = %s""", (credit_id,))
+    end_date = cursor.fetchone()[0].strftime("%Y-%m-%d")
+
+    cursor.execute("""SELECT sum, amount_repaid, interest_rate FROM credit WHERE credit_id = %s""", (credit_id,))
+    credit = cursor.fetchone()
+
+    cursor.execute("""
+                SELECT date, sum, status
+                FROM transaction
+                WHERE payment_destination = %s
+            """, (("Погашення кредиту № " + str(credit_id)),))
+
+    transactions = cursor.fetchall()
+
+    html_content = render_template(
+        'credit_pdf.html',
+        snp=snp,
+        end_date=end_date,
+        credit_id=credit_id,
+        credit=credit,
+        transactions=transactions,
+    )
+
+    with NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
+        pdfkit.from_string(html_content, temp_pdf.name, configuration=config)
+        temp_pdf.seek(0)
+        filename = f"credit_{credit_id}.pdf"
+        return send_file(
+            temp_pdf.name,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/pdf'
+        )
 
 if __name__ == '__main__':
     app.run(debug=True)

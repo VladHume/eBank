@@ -21,7 +21,7 @@
         <p class="transactions-text">Мої кредити </p>
         <p class="sum">Сума <span class="status">Статус</span></p>
         {% for c in credits %}
-        <a href="take_a_credit.html" class="transaction">
+        <a href="{{ url_for('credit_info', credit_id=c[3]) }}" class="transaction">
             <p class="transaction-text">{{c[1]}}/{{c[0]}} грн</p>
             <div class="status-container">
                 <span class="status-value">{{c[2]}}</span>
