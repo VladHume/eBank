@@ -1351,7 +1351,7 @@ def credit_history():
     client_id = client[0]
     cursor.execute("""SELECT c.sum, c.amount_repaid, c.status, c.credit_id
     FROM credit c
-    WHERE client_id = %s""", (client_id,))
+    WHERE client_id = %s AND status = %s""", (client_id, "Активний",))
     credits = cursor.fetchall()
     return render_template('credit_history.html', credits=credits)
 
@@ -1612,7 +1612,7 @@ def pay_credit():
     client_id = client[0]
     cursor.execute("""SELECT c.credit_id, c.sum, c.amount_repaid, c.status
         FROM credit c
-        WHERE client_id = %s""", (client_id,))
+        WHERE client_id = %s AND status = %s""", (client_id, "Активний",))
     credits = cursor.fetchall()
 
     user_id = session.get('user_id')
@@ -1741,6 +1741,15 @@ def pay_for_credit():
             create_transaction_response = create_transaction_internal(transaction_data)
             if create_transaction_response.get("error"):
                 raise Exception(create_transaction_response["error"])
+
+            cursor.execute("""SELECT sum, amount_repaid FROM credit WHERE credit_id = %s""",(credit_id,))
+            credit = cursor.fetchone()
+
+            if credit[0] <= credit[1]:
+                cursor.execute(
+                    "UPDATE credit SET status = %s WHERE credit_id = %s",
+                    ("Закритий", credit_id)
+                )
 
             mysql.connection.commit()
             cursor.close()

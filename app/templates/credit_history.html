@@ -24,6 +24,7 @@
         <a href="{{ url_for('credit_info', credit_id=c[3]) }}" class="transaction">
             <p class="transaction-text">{{c[1]}}/{{c[0]}} грн</p>
             <div class="status-container">
+                <span class="transaction-text">№{{c[3]}}</span>
                 <span class="status-value">{{c[2]}}</span>
                 <button class="image-button">
                     <img src="..\static\icons\print.png" alt="Друкувати ПДФ">
