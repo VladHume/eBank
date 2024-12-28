@@ -97,8 +97,8 @@ CREATE TABLE quarantors(
 CREATE TABLE credit(
 	credit_id  INT NOT NULL AUTO_INCREMENT,
 	client_id INT,
-	sum INT,
-    amount_repaid INT,
+	sum INT CHECK(sum >= 0),
+    amount_repaid INT DEFAULT 0,
 	payment_day	DATETIME,
 	interest_rate INT,
 	quarantor_id INT,
@@ -386,12 +386,36 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE EVENT year_update_interest_event
+CREATE EVENT year_update_interest_event_deposit
 ON SCHEDULE EVERY 1 YEAR
 STARTS CURRENT_TIMESTAMP
 DO
 BEGIN
     -- Викликаємо процедуру для нарахування відсотків
-    CALL calculate_interest();
+    CALL calculate_year_interest();
+END //
+DELIMITER ;
+
+
+
+DELIMITER //
+CREATE PROCEDURE calculate_month_interest_с()
+BEGIN
+  UPDATE credit
+  SET sum = CASE
+    WHEN status = 'Активний' THEN sum + (sum * (CAST(interest_rate AS UNSIGNED) / 100))
+    ELSE sum
+  END;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE EVENT month_update_interest_event_credit
+ON SCHEDULE EVERY 1 MONTH
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    -- Викликаємо процедуру для нарахування відсотків
+    CALL calculate_month_interest_с();
 END //
 DELIMITER ;
