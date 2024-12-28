@@ -224,6 +224,7 @@ body {
 
 .green-button {
     background-color: #4CAF50;
+    width: 200px;
     color: white;
     font-size: 16px;
     font-weight: bold;

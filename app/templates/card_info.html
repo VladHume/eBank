@@ -45,6 +45,9 @@
                 <button class="green-button" title="Переглянути транзакції картки" onclick="viewCardTransactions()" >
                     Переглянути транзакції картки
                 </button>
+                <button class="green-button" title="Переглянути транзакції картки" onclick="generateStatement(currentCardIndex)">
+                    Виписка за картою
+                </button>
             </div>
         </div>
 
@@ -67,6 +70,28 @@
                 currentCardIndex = (currentCardIndex + 1) % cards.length; // Переходимо до наступної картки (циклічно)
             }
             updateCardInfo();
+        }
+
+        function generateStatement(cardIndex) {
+            const card = cards[cardIndex];
+
+            fetch(`/generate_statement/${card.card_account_id}`, {
+                method: 'POST',
+            })
+            .then(response => response.blob())  // Ensure you fetch the file as a Blob
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `transaction_${card.card_account_id}.pdf`;  // Use appropriate filename
+                document.body.appendChild(link);
+                link.click();  // Trigger download
+                link.remove();  // Clean up
+            })
+            .catch(error => {
+                console.error('Error generating statement:', error);
+                alert('There was an error generating the statement.');
+            });
         }
 
         function updateCardInfo() {
