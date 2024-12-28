@@ -16,6 +16,8 @@ app.config['MYSQL_DB'] = 'banksystem'
 
 mysql = MySQL(app)
 
+config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+
 @app.route('/')
 def index():
     session.clear()
@@ -1355,6 +1357,28 @@ def credit_history():
     credits = cursor.fetchall()
     return render_template('credit_history.html', credits=credits)
 
+@app.route('/credit_history_ar')
+def credit_history_ar():
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("Користувач не авторизований", 'error')
+        return redirect(url_for('login'))
+    cursor = mysql.connection.cursor()
+
+    # Отримання client_id з таблиці client
+    cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
+    client = cursor.fetchone()
+    if not client:
+        flash("Клієнт не знайдений", 'error')
+        return redirect(url_for('home_screen'))
+
+    client_id = client[0]
+    cursor.execute("""SELECT c.sum, c.amount_repaid, c.status, c.credit_id
+    FROM credit c
+    WHERE client_id = %s AND status = %s""", (client_id, "Закритий",))
+    credits = cursor.fetchall()
+    return render_template('credit_history_ar.html', credits=credits)
+
 @app.route('/take_credit')
 def take_credit():
     user_id = session.get('user_id')
@@ -1764,8 +1788,6 @@ def pay_for_credit():
 
     # Для методу GET повертаємо форму
     return render_template('credit_history.html')
-
-config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
 
 @app.route('/transaction_pdf/<transaction_id>')
 def transaction_pdf(transaction_id):
