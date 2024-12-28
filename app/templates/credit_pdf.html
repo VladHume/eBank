@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Виписка по кредиту</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0044cc;
+        }
+
+        .transaction-details {
+            margin: 20px 0;
+        }
+
+        .transaction-details h2 {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        .transaction-details ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .transaction-details li {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f4f4f4;
+            color: #333;
+            font-weight: bold;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .credit-summary {
+            margin-bottom: 20px;
+        }
+
+        .credit-summary p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1><strong>єБанк</strong></h1>
+        <p>тел.: 0 800 123 456, support@e-bank.ua</p>
+        <p>01001, м. Київ, вул. Центральна, 1</p>
+        <p>Ліцензія НБУ №123 від 01.01.2023</p>
+    </header>
+    <main>
+        <section class="credit-summary">
+            <h2>Виписка по кредиту</h2>
+            <p><strong>Клієнт:</strong> {{snp[0]}} {{snp[1]}} {{snp[2]}}</p>
+            <p><strong>Номер кредитного договору:</strong> №{{credit_id}}</p>
+            <p><strong>Дата погашення:</strong> {{end_date}}</p>
+            <p><strong>Загальна сума кредиту:</strong> {{credit[0]}} UAH</p>
+            <p><strong>Відсоток:</strong> {{credit[2]}}%</p>
+            <p><strong>Сплачена сума кредиту:</strong> {{credit[1]}} UAH</p>
+        </section>
+        <section class="transaction-details">
+            <h3>Деталізація поповнень</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>Дата і час</th>
+                    <th>Сума поповнення</th>
+                    <th>Статус</th>
+                </tr>
+                </thead>
+                <tbody>
+                {%for t in transactions%}
+                    <tr>
+                        <td>{{t[0]}}</td>
+                        <td>+{{t[1]}} UAH</td>
+                        <td>{{t[2]}}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <p>Вклади гарантуються відповідно до Закону України “Про систему гарантування вкладів фізичних осіб”.</p>
+        <p>Дата виписки: 27.12.2024</p>
+    </footer>
+</div>
+</body>
+</html>

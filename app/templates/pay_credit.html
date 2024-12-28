@@ -37,15 +37,6 @@
 </header>
 <body>
     <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <ul>
-                        {% for category, message in messages %}
-                            <li class="{{ category }}">{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
         <main class="form-container">
             <form class="transfer-form" action="{{url_for('pay_for_credit')}}" method="POST" onsubmit="validateForm(event)">
                 <label for="surname">З картки</label>

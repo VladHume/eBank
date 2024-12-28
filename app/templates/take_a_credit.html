@@ -24,25 +24,27 @@
                 <h2>Мій кредит</h2>
                 <div class="credit-value-block">
                     <p class="credit-amount">Сума кредиту</p>
-                    <p class="credit-value">0 грн.</p>
+                    <p class="credit-value">{{credit[1]}}/{{credit[0]}} грн.</p>
                 </div>
             </div>
 
             <!-- Права секція -->
             <div class="right-section">
                 <div class="credit-details">
-                    <p>Відсоткова ставка:</p>
-                    <p>Час сплати:</p>
-                    <p>Поручитель:</p>
+                    <p>Відсоткова ставка: {{credit[4]}}%</p>
+                    <p>Час сплати: {{credit[6]}}</p>
+                    <p>Поручитель: {{guarantor[0]}} {{guarantor[1]}} {{guarantor[2]}} {{guarantor[3]}}</p>
                 </div>
              
             </div>
         </div>
 
         <!-- Блок кнопок -->
-         <button class="action-button">
-            <div class="arrow-button-text">Виписка кредиту</div>
-        </button>
+         <form action="{{ url_for('credit_pdf', credit_id=credit[3]) }}" method="POST" target="_blank">
+            <button type="submit" class="action-button">
+                <div class="arrow-button-text">Виписка кредиту</div>
+            </button>
+        </form>
        
     </div>
 </body>
