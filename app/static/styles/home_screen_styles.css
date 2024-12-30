@@ -317,4 +317,26 @@ body {
     width: 50%;
 }
 
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #fff;
+    border: none;
+    margin-top: 17%;
+}
+
+.card-footer .currency {
+    font-weight: bold;
+    margin-left: 20px;
+}
+
+.card-footer .payment-system {
+    font-weight: bold;
+    margin-right: 20px;
+}
+
+
 

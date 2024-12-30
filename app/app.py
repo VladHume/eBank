@@ -205,7 +205,7 @@ def home_screen():
 
         # Get card account information from the card_account table
         cursor.execute("""
-                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type, curr_id, payment_system_id
                 FROM card_account WHERE account_id IN %s
             """, (account_ids,))
         cards = cursor.fetchall()
@@ -216,6 +216,11 @@ def home_screen():
         card_list = []
 
         for card in cards:
+            cursor.execute("SELECT name FROM currency_conversion WHERE currency_id = %s", (card[8],))
+            currency = cursor.fetchone()[0]
+
+            cursor.execute("SELECT name FROM payment_systems WHERE payment_system_id = %s", (card[9],))
+            payment_system = cursor.fetchone()[0]
             card_info = {
                 "card_account_id": card[0],
                 "credit_number": card[1],
@@ -223,7 +228,9 @@ def home_screen():
                 "sum": card[3],
                 "credit_limit": card[4],
                 "exporation_date": card[5],
-                "cvv_code": card[6]
+                "cvv_code": card[6],
+                "currency": currency,
+                "payment_system": payment_system
             }
 
             # Get card type information
@@ -247,6 +254,8 @@ def home_screen():
             transaction_list = []
 
             for t in transactions:
+                if len(transaction_list) >= 6:
+                    break
                 transaction_type = '+' if t[4] == card[0] else '-'
                 cursor.execute("""
                                 SELECT c.name
@@ -398,7 +407,7 @@ def card_info():
 
         # Отримання інформації про карткові акаунти з таблиці card_account
         cursor.execute("""
-                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
+                SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type, curr_id, payment_system_id
                 FROM card_account WHERE account_id IN %s
             """, (tuple(account_ids),))
         cards = cursor.fetchall()
@@ -408,6 +417,11 @@ def card_info():
 
         card_list = []
         for card in cards:
+            cursor.execute("SELECT name FROM currency_conversion WHERE currency_id = %s", (card[8],))
+            currency = cursor.fetchone()[0]
+
+            cursor.execute("SELECT name FROM payment_systems WHERE payment_system_id = %s", (card[9],))
+            payment_system = cursor.fetchone()[0]
             card_info = {
                 "card_account_id": card[0],
                 "credit_number": card[1],
@@ -415,7 +429,9 @@ def card_info():
                 "sum": card[3],
                 "credit_limit": card[4],
                 "exporation_date": card[5],
-                "cvv_code": card[6]
+                "cvv_code": card[6],
+                "currency": currency,
+                "payment_system": payment_system
             }
 
             # Отримання типу картки за card_type_id

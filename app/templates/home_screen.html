@@ -37,6 +37,10 @@
                     <div class="card">
                         <p class="bank_name">єБанк</p>
                         <p class="card_number" id="card_number">{{ cards[0].credit_number }}</p> <!-- Виводимо номер тільки першої картки -->
+                        <div class="card-footer">
+                            <span class="currency">{{cards[0].currency}}</span>
+                            <span class="payment-system">{{cards[0].payment_system}}</span>
+                        </div>
                     </div>
                     <p class="text">Карта типу {{ cards[0].card_type }}<br>{{ cards[0].sum }}</p> <!-- Інформація про першу картку -->
                 </div>

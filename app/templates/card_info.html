@@ -30,6 +30,10 @@
                 <div class="card" id="card">
                     <p class="bank_name">єБанк</p>
                     <p class="card_number" id="card-number"></p>
+                    <div class="card-footer">
+                        <span class="currency" id="currency"></span>
+                        <span class="payment-system" id="payment_system"></span>
+                    </div>
                 </div>
             </div>
             <div class="button-container">
@@ -103,6 +107,8 @@
             document.getElementById('expiration-date').innerText = formatDate(card.exporation_date);
             document.getElementById('cvv').innerText = card.cvv_code;
             document.getElementById('credit-limit').innerText = card.credit_limit;
+            document.getElementById('currency').innerText = card.currency;
+            document.getElementById('payment_system').innerText = card.payment_system;
         }
 
         function formatCardNumber(cardNumber) {
@@ -132,6 +138,8 @@
             document.getElementById('expiration-date').innerText = '';
             document.getElementById('cvv').innerText = '';
             document.getElementById('credit-limit').innerText = '';
+            document.getElementById('currency').innerText = '';
+            document.getElementById('payment_system').innerText = '';
         }
 
 
