@@ -125,7 +125,18 @@
                 {%for t in transactions%}
                     <tr>
                         <td>{{t[0]}}</td>
-                        <td>+{{t[1]}} UAH</td>
+                        <td>
+                            {{ t[1] }}
+                            {% if t[3] == 1 %}
+                                UAH
+                            {% elif t[3] == 2 %}
+                                USD
+                            {% elif t[3] == 3 %}
+                                EUR
+                            {% else %}
+                                Інша валюта
+                            {% endif %}
+                        </td>
                         <td>{{t[2]}}</td>
                     </tr>
                 {% endfor %}

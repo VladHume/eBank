@@ -2043,7 +2043,7 @@ def credit_pdf(credit_id):
     credit = cursor.fetchone()
 
     cursor.execute("""
-                SELECT date, sum, status
+                SELECT date, sum, status, currency
                 FROM transaction
                 WHERE payment_destination = %s
             """, (("Погашення кредиту № " + str(credit_id)),))
