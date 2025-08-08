@@ -8,10 +8,10 @@ import random
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '1234'
-# Конфігурація MySQL
+# MySQL config
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'новий_пароль'
+app.config['MYSQL_PASSWORD'] = 'password'
 app.config['MYSQL_DB'] = 'banksystem'
 
 mysql = MySQL(app)
@@ -388,7 +388,7 @@ def card_info():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Getting client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -396,7 +396,7 @@ def card_info():
 
         client_id = client[0]
 
-        # Отримання акаунтів типу 1 з таблиці account
+        # Getting type 1 accounts from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -405,7 +405,7 @@ def card_info():
 
         account_ids = [account[0] for account in accounts]
 
-        # Отримання інформації про карткові акаунти з таблиці card_account
+        # Getting information about card accounts from the card_account table
         cursor.execute("""
                 SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type, curr_id, payment_system_id
                 FROM card_account WHERE account_id IN %s
@@ -434,13 +434,13 @@ def card_info():
                 "payment_system": payment_system
             }
 
-            # Отримання типу картки за card_type_id
+            # Getting card type by card_type_id
             cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
             card_type = cursor.fetchone()
             if card_type:
                 card_info["card_type"] = card_type[0]
             else:
-                card_info["card_type"] = "Невідомий тип"  # Якщо тип не знайдено
+                card_info["card_type"] = "Невідомий тип"  # If type not found
 
             card_list.append(card_info)
 
@@ -449,20 +449,20 @@ def card_info():
         return f"Помилка: {e}", 500
 
 def generate_credit_card(payment_system):
-    # Перші цифри визначаються платіжною системою
+    # The first digits are determined by the payment system
     prefix = '4' if payment_system == 1 else '5'
-    # Генеруємо номер картки (16 цифр)
+    # Generate a card number (16 digits)
     credit_number = prefix + ''.join(str(random.randint(0, 9)) for _ in range(15))
-    # Генеруємо CVV (3 цифри)
+    # Generate CVV (3 digits)
     cvv = ''.join(str(random.randint(0, 9)) for _ in range(3))
     return credit_number, cvv
 
 def generate_unique_credit_card(cursor, payment_system):
     while True:
-        # Генерація номера картки та CVV
+        # Card number and CVV generation
         card_number, cvv = generate_credit_card(payment_system)
 
-        # Перевірка унікальності номера картки в БД
+        # Checking the uniqueness of the card number in the database
         cursor.execute("SELECT COUNT(*) FROM card_account WHERE credit_number = %s", (card_number,))
         if cursor.fetchone()[0] == 0:
             return card_number, cvv
@@ -474,32 +474,32 @@ def creating_card():
         return "Користувач не авторизований", 401
 
     if request.method == 'POST':
-        card_type = int(request.form['card_type'])  # Тип картки: 1 - дебетова, 2 - кредитна
+        card_type = int(request.form['card_type'])  # Card type: 1 - debit, 2 - credit
         payment_system = int(request.form['payment_system'])  # 1 - VISA, 2 - MasterCard
-        currency = int(request.form['currency'])  # Валюта (curr_id)
-        pin = request.form['PIN']  # PIN-код
+        currency = int(request.form['currency'])  # Currency (curr_id)
+        pin = request.form['PIN']  # PIN
 
         cursor = mysql.connection.cursor()
 
-        # Генерація унікального номера картки та CVV
+        # Generation of a unique card number and CVV
         credit_number, cvv_code = generate_unique_credit_card(cursor, payment_system)
 
-        # Встановлення кредитного ліміту залежно від типу картки
+        # Setting a credit limit depending on the type of card
         credit_limit = 0 if card_type == 1 else 20000
 
-        # Отримання client_id
+        # Getting client_id
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client_id = cursor.fetchone()
         if not client_id:
             return "Клієнт не знайдений", 404
 
-        # Отримання account_id
+        # Getting account_id
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id[0],))
         account_id = cursor.fetchone()
         if not account_id:
             return "Акаунт не знайдений", 404
 
-        # Додавання запису в card_account
+        # Adding a record to card_account
         cursor.execute("""
             INSERT INTO card_account (
                 account_id, card_type, payment_system_id, sum, my_money, exporation_date, cvv_code, credit_limit, curr_id, pin, credit_number
@@ -512,7 +512,7 @@ def creating_card():
 
         return redirect(url_for('home_screen'))
 
-    # Якщо GET-запит, отримуємо дані для вибору типів карток, платіжних систем і валют
+    # If it is a GET request, we get data for selecting card types, payment systems and currencies
     cursor = mysql.connection.cursor()
 
     cursor.execute("SELECT * FROM card_types")
@@ -542,7 +542,7 @@ def delete_card(card_id):
     try:
         cursor = mysql.connection.cursor()
 
-        # Перевіряємо, чи картка належить поточному користувачеві
+        # Check if the card belongs to the current user
         cursor.execute("""
             SELECT ca.card_account_id 
             FROM card_account ca 
@@ -555,7 +555,7 @@ def delete_card(card_id):
         if not card:
             return "Картку не знайдено або вона не належить користувачеві", 404
 
-        # Видаляємо картку
+        # Removing the card
         cursor.execute("DELETE FROM card_account WHERE card_account_id = %s", (card_id,))
         mysql.connection.commit()
 
@@ -575,7 +575,7 @@ def deposits():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Getting client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -584,7 +584,7 @@ def deposits():
 
         client_id = client[0]
 
-        # Отримання акаунтів типу 1 з таблиці account
+        # Getting type 1 accounts from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -594,7 +594,7 @@ def deposits():
 
         account_ids = [account[0] for account in accounts]
 
-        # Отримання інформації про карткові акаунти з таблиці card_account
+        # Getting information about card accounts from the card_account table
         cursor.execute("""
                     SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                     FROM card_account WHERE account_id IN %s
@@ -616,7 +616,7 @@ def deposits():
                 "cvv_code": card[6]
             }
 
-            # Отримання типу картки за card_type_id
+            # Getting card type by card_type_id
             cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
             card_type = cursor.fetchone()
             if card_type:
@@ -626,12 +626,12 @@ def deposits():
 
             card_list.append(card_info)
 
-        # Перевірка наявності депозиту
+        # Checking the availability of the deposit
         cursor.execute("SELECT * FROM deposits WHERE client_id = %s", (client_id,))
         deposit = cursor.fetchone()
 
         if deposit:
-            # Якщо депозит існує, передаємо його дані в шаблон
+            # If the deposit exists, we pass its data to the template
             deposit_data = {
                 "amount": deposit[4],
                 "interest_rate": deposit[5],
@@ -656,13 +656,13 @@ def take_deposit():
             flash("Користувач не авторизований", 'error')
             return redirect(url_for('deposits'))
 
-        # Отримання даних депозиту з форми
+        # Getting deposit data from a form
         credit_number = request.form.get('credit_number')
         opening_date = datetime.today()
         closing_date = request.form.get('closing_date')
         interest_rate = int(request.form.get('interest_rate'))
         deposit_amount = request.form.get('deposit-amount')
-        # Отримання curr_id для картки
+        # Getting curr_id for a card
         cursor = mysql.connection.cursor()
         cursor.execute(
             "SELECT curr_id FROM card_account WHERE card_account_id = %s",
@@ -694,7 +694,7 @@ def take_deposit():
             flash("Щось не так з балансом", 'error')
             return redirect(url_for('deposits'))
 
-        # Отримання курсу для конвертації у гривні
+        # Getting the rate for conversion into hryvnia
         cursor.execute(
             "SELECT sales_rate FROM currency_conversion WHERE currency_id = %s",
             (curr_id,)
@@ -713,7 +713,7 @@ def take_deposit():
             flash("На картці недостатньо коштів", 'error')
             return redirect(url_for('deposits'))
 
-        # Оновлення балансу картки
+        # Card balance update
         cursor.execute(
             "UPDATE card_account SET sum = sum - %s WHERE card_account_id = %s",
             (deposit_amount, credit_number)
@@ -721,21 +721,21 @@ def take_deposit():
 
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
-        # Виклик методу для створення транзакції
+        # Calling a method to create a transaction
         transaction_data = {
             "sum": deposit_amount,
             "payer_id": credit_number,
             "receiver_id": 0,
             "status": "Completed",
-            "payment_system_id": payment_system_id[0],  # Значення за замовчуванням
+            "payment_system_id": payment_system_id[0],  # Default value
             "currency": curr_id[0],
             "payment_destination": "Поповнення депозиту"
         }
-        # Виклик функції для створення транзакції безпосередньо
+        # Calling the function to create a transaction directly
         create_transaction_response = create_transaction_internal(transaction_data)
         if create_transaction_response.get("error"):
             raise Exception(create_transaction_response["error"])
-        # Додавання депозиту в базу
+        # Adding a deposit to the database
         cursor.execute(
             """
             INSERT INTO deposits (client_id, interest_rate, opening_date, closing_date, amount)
@@ -762,17 +762,17 @@ def create_transaction_internal(data):
         currency = data['currency']
         payment_destination = data['payment_destination']
 
-        # Перетворення типів для коректного внесення в базу
+        # Converting types for correct entry into the database
         sum = int(sum)
         payer_id = int(payer_id)
         receiver_id = int(receiver_id)
         payment_system_id = int(payment_system_id)
         currency = int(currency)
 
-        # Поточна дата
+        # Current date
         date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Додавання транзакції в базу
+        # Adding a transaction to the database
         cursor = mysql.connection.cursor()
         cursor.execute(
             """
@@ -797,7 +797,7 @@ def transactions():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримуємо client_id з таблиці client
+        # Get client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -805,7 +805,7 @@ def transactions():
 
         client_id = client[0]
 
-        # Отримуємо акаунти типу 1 з таблиці account
+        # We get type 1 accounts from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -814,11 +814,11 @@ def transactions():
 
         account_ids = [account[0] for account in accounts]
 
-        # Якщо account_ids містить лише одне значення, забезпечуємо це як кортеж
+        # If account_ids contains only one value, provide it as a tuple
         if len(account_ids) == 1:
-            account_ids = (account_ids[0],)  # робимо кортежем
+            account_ids = (account_ids[0],)  # we make a tuple
 
-        # Отримуємо інформацію по картам з таблиці card_account
+        # We get information about cards from the card_account table
         cursor.execute("""
                     SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                     FROM card_account WHERE account_id IN %s
@@ -841,7 +841,7 @@ def transactions():
                 "cvv_code": card[6]
             }
 
-            # Отримуємо тип картки
+            # We get the card type
             cursor.execute("SELECT type FROM card_types WHERE card_type_id = %s", (card[7],))
             card_type = cursor.fetchone()
             if card_type:
@@ -861,9 +861,9 @@ def transactions():
             transaction_list = []
 
             for t in transactions:
-                # Якщо ми відправляємо гроші самому собі (payer_id = receiver_id), додаємо дві транзакції
+                # If we send money to ourselves (payer_id = receiver_id), we add two transactions
                 if t[3] == t[4]:
-                    # Перша транзакція - надходження
+                    # First transaction - receipt
                     cursor.execute("""
                         SELECT c.name
                         FROM currency_conversion c
@@ -897,7 +897,7 @@ def transactions():
                     }
                     transaction_list.append(transaction_info)
                 else:
-                    # Якщо payer_id і receiver_id різні, додаємо звичайну транзакцію
+                    # If payer_id and receiver_id are different, add a regular transaction
                     transaction_type = '+' if t[4] == card[0] else '-'
 
                     cursor.execute("""
@@ -960,7 +960,7 @@ def transfer():
         try:
             cursor = mysql.connection.cursor()
 
-            # Отримання client_id поточного користувача
+            # Getting the client_id of the current user
             cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
             client = cursor.fetchone()
             if not client:
@@ -969,7 +969,7 @@ def transfer():
 
             client_id = client[0]
 
-            # Отримання акаунтів типу 1
+            # Getting type 1 accounts
             cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
             accounts = cursor.fetchall()
             if not accounts:
@@ -978,7 +978,7 @@ def transfer():
 
             account_ids = [account[0] for account in accounts]
 
-            # Отримання карткових акаунтів
+            # Obtaining card accounts
             cursor.execute("""
                 SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                 FROM card_account WHERE account_id IN %s
@@ -1001,21 +1001,21 @@ def transfer():
                 }
                 card_list.append(card_info)
 
-            # Перевірка існування отримувача в базі даних
+            # Checking the recipient's receipt in the database
             cursor.execute("SELECT account_id FROM card_account WHERE credit_number = %s", (receiver,))
             receiver_account = cursor.fetchone()
 
             if receiver_account:
                 receiver_account_id = receiver_account[0]
 
-                # Отримання client_id отримувача
+                # Getting the recipient's client_id
                 cursor.execute("SELECT client_id FROM account WHERE account_id = %s", (receiver_account_id,))
                 receiver_client = cursor.fetchone()
 
                 if receiver_client:
                     receiver_client_id = receiver_client[0]
 
-                    # Отримання даних отримувача
+                    # Obtaining recipient data
                     cursor.execute("SELECT surname, name, patronymic FROM client WHERE client_id = %s", (receiver_client_id,))
                     receiver_info = cursor.fetchone()
 
@@ -1058,7 +1058,7 @@ def check_and_pay():
             return "Клієнт не знайдений", 404
 
         sender_name = f"{client[0]} {client[1]} {client[2]}"
-        # Перевірка існування отримувача в базі даних
+        # Checking the existence of a recipient in the database
         cursor.execute("SELECT account_id FROM card_account WHERE credit_number = %s", (receiver_card,))
         receiver_account = cursor.fetchone()
 
@@ -1066,14 +1066,14 @@ def check_and_pay():
         if receiver_account:
             receiver_account_id = receiver_account[0]
 
-            # Отримання client_id отримувача
+            # Getting the recipient's client_id
             cursor.execute("SELECT client_id FROM account WHERE account_id = %s", (receiver_account_id,))
             receiver_client = cursor.fetchone()
 
             if receiver_client:
                 receiver_client_id = receiver_client[0]
 
-                # Отримання даних отримувача
+                # Obtaining recipient data
                 cursor.execute("SELECT surname, name, patronymic FROM client WHERE client_id = %s",
                                (receiver_client_id,))
                 receiver_info = cursor.fetchone()
@@ -1101,7 +1101,7 @@ def refill_phone():
         try:
             cursor = mysql.connection.cursor()
 
-            # Отримання client_id з таблиці client
+            # Getting client_id from the client table
             cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
             client = cursor.fetchone()
             if not client:
@@ -1110,7 +1110,7 @@ def refill_phone():
 
             client_id = client[0]
 
-            # Отримання акаунтів типу 1 з таблиці account
+            # Getting type 1 accounts from the account table
             cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
             accounts = cursor.fetchall()
 
@@ -1120,7 +1120,7 @@ def refill_phone():
 
             account_ids = [account[0] for account in accounts]
 
-            # Отримання інформації про карткові акаунти з таблиці card_account
+            # Getting information about card accounts from the card_account table
             cursor.execute("""
                         SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                         FROM card_account WHERE account_id = %s
@@ -1188,7 +1188,7 @@ def create_refill_phone():
                 flash("Щось не так з балансом", 'error')
                 return redirect(url_for('refill_phone'))
 
-            # Отримання курсу для конвертації у гривні
+            # Getting the rate for conversion into hryvnia
             cursor.execute(
                 "SELECT sales_rate FROM currency_conversion WHERE currency_id = %s",
                 (curr_id,)
@@ -1207,7 +1207,7 @@ def create_refill_phone():
                 flash("На картці недостатньо коштів", 'error')
                 return redirect(url_for('refill_phone'))
 
-            # Оновлення балансу картки
+            # Card balance update
             cursor.execute(
                 "UPDATE card_account SET sum = sum - %s WHERE card_account_id = %s",
                 (sum_uah, card_number)
@@ -1218,7 +1218,7 @@ def create_refill_phone():
                 (curr_id,)
             )
             curr = cursor.fetchone()
-            # Виклик методу для створення транзакції
+            # Calling a method to create a transaction
             transaction_data = {
                 "sum": sum_uah,
                 "payer_id": card_number,
@@ -1228,7 +1228,7 @@ def create_refill_phone():
                 "currency": curr_id[0],
                 "payment_destination": "Поповнення номеру телефона: " + phone_number + " на суму: " + str(f"{sum_uah:.3f}") + curr[0],
             }
-            # Виклик функції для створення транзакції безпосередньо
+            # Calling the function to create a transaction directly
             create_transaction_response = create_transaction_internal(transaction_data)
             if create_transaction_response.get("error"):
                 raise Exception(create_transaction_response["error"])
@@ -1247,14 +1247,14 @@ def pay():
     if not user_id:
         return "Користувач не авторизований", 401
     if request.method == 'POST':
-        card_account = int(request.form.get('card_account'))  # ID картки відправника
-        receiver_full_name = request.form.get('receiver_full_name')  # ПІБ отримувача
+        card_account = int(request.form.get('card_account'))  # ID card of the sender
+        receiver_full_name = request.form.get('receiver_full_name')  # Recipient's full name
         receiver_card = request.form.get('receiver_card').replace(' ', '')
-        destination = request.form.get('destination')  # Призначення платежу
-        sum_uah = int(request.form.get('sum'))  # Сума в гривнях
+        destination = request.form.get('destination')  # Purpose of payment
+        sum_uah = int(request.form.get('sum'))  # Amount in hryvnias
         try:
             cursor = mysql.connection.cursor()
-            # Отримати дані картки відправника
+            # Get sender's card details
             cursor.execute(
                 "SELECT sum, curr_id FROM card_account WHERE card_account_id = %s", (card_account,)
             )
@@ -1263,7 +1263,7 @@ def pay():
                 return "Картка відправника не знайдена", 404
 
             sender_balance, sender_currency = sender_card
-            # Отримати курс продажу для валюти картки
+            # Get the selling rate for the card currency
             cursor.execute(
                 "SELECT buying_rate FROM currency_conversion WHERE currency_id = %s", (sender_currency,)
             )
@@ -1274,19 +1274,19 @@ def pay():
 
             sales_rate = conversion_rate[0]
 
-            # Розрахунок суми в валюті відправника
+            # Calculation of the amount in the sender's currency
             sum_in_currency = sum_uah / sales_rate
 
             if sender_balance < sum_in_currency:
                 return "Недостатньо коштів на рахунку", 400
 
-            # Списання коштів з рахунку відправника
+            # Debiting funds from the sender's account
             cursor.execute(
                 "UPDATE card_account SET sum = sum - %s WHERE card_account_id = %s",
                 (sum_in_currency, card_account),
             )
             mysql.connection.commit()
-            # Перевірка наявності картки отримувача
+            # Checking the recipient's card availability
             cursor.execute(
                 "SELECT card_account_id, curr_id FROM card_account WHERE credit_number = %s",
                 (receiver_card,)
@@ -1297,14 +1297,14 @@ def pay():
                 "payer_id": card_account,
                 "receiver_id": 0,
                 "status": "Completed",
-                "payment_system_id": 1,  # Значення за замовчуванням
+                "payment_system_id": 1,  # Default value
                 "currency": 1,
                 "payment_destination": destination,
             }
             if receiver:
                 receiver_account_id, receiver_currency = receiver
 
-                # Отримати курс купівлі валюти отримувача
+                # Get the buying rate of the recipient's currency
                 cursor.execute(
                     "SELECT sales_rate FROM currency_conversion WHERE currency_id = %s", (receiver_currency,)
                 )
@@ -1315,9 +1315,9 @@ def pay():
 
                 purchase_rate = receiver_conversion_rate[0]
 
-                # Конвертувати суму в валюту отримувача
+                # Convert the amount to the recipient's currency
                 sum_in_receiver_currency = int(sum_uah / purchase_rate)
-                # Зарахування коштів отримувачу
+                # Crediting funds to the recipient
                 cursor.execute(
                     "UPDATE card_account SET sum = sum + %s WHERE card_account_id = %s",
                     (sum_in_receiver_currency, receiver_account_id),
@@ -1333,12 +1333,12 @@ def pay():
                     "payer_id": card_account,
                     "receiver_id": receiver_account_id,
                     "status": "Completed",
-                    "payment_system_id": payment_system_id[0],  # Значення за замовчуванням
+                    "payment_system_id": payment_system_id[0],  # Default value
                     "currency": 1,
                     "payment_destination": destination,
                 }
 
-            # Виклик функції для створення транзакції безпосередньо
+            # Calling the function to create a transaction directly
             create_transaction_internal(transaction_data)
             mysql.connection.commit()
             cursor.close()
@@ -1359,7 +1359,7 @@ def credit_history():
         return redirect(url_for('login'))
     cursor = mysql.connection.cursor()
 
-    # Отримання client_id з таблиці client
+    # Getting client_id from the client table
     cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
     client = cursor.fetchone()
     if not client:
@@ -1381,7 +1381,7 @@ def credit_history_ar():
         return redirect(url_for('login'))
     cursor = mysql.connection.cursor()
 
-    # Отримання client_id з таблиці client
+    # Getting client_id from the client table
     cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
     client = cursor.fetchone()
     if not client:
@@ -1404,7 +1404,7 @@ def take_credit():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Getting client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -1413,7 +1413,7 @@ def take_credit():
 
         client_id = client[0]
 
-        # Отримання акаунтів типу 1 з таблиці account
+        # Getting type 1 accounts from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -1423,7 +1423,7 @@ def take_credit():
 
         account_ids = [account[0] for account in accounts]
 
-        # Отримання інформації про карткові акаунти з таблиці card_account
+        # Getting information about card accounts from the card_account table
         cursor.execute("""
                     SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                     FROM card_account WHERE account_id = %s
@@ -1462,7 +1462,7 @@ def credit():
 
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Getting client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -1486,7 +1486,7 @@ def credit():
             return redirect(url_for('take_credit'))
 
 
-        # Вставка даних у таблицю quarantors
+        # Inserting data into the quarantors table
         cursor.execute("""
             INSERT INTO quarantors (surname, `name`, patronymic, address)
             VALUES (%s, %s, %s, %s)
@@ -1494,7 +1494,7 @@ def credit():
 
         quarantor_id = cursor.lastrowid
 
-        # Вставка даних у таблицю credit
+        # Inserting data into the credit table
         cursor.execute("""
             INSERT INTO credit (client_id, sum, amount_repaid, payment_day, interest_rate, quarantor_id, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -1516,7 +1516,7 @@ def credit():
 
         sales_rate = conversion[0]
         sum = sum/sales_rate
-        # Оновлення балансу картки
+        # Card balance update
         new_sum = current_sum[0] + sum
         cursor.execute("UPDATE card_account SET sum = %s WHERE card_account_id = %s", (new_sum, card_number))
         cursor.execute("""SELECT payment_system_id FROM card_account WHERE card_account_id = %s""", (card_number,))
@@ -1527,11 +1527,11 @@ def credit():
             "payer_id": 0,
             "receiver_id": card_number,
             "status": "Completed",
-            "payment_system_id": payment_system_id[0],  # Значення за замовчуванням
+            "payment_system_id": payment_system_id[0],  # Default value
             "currency": curr_id[0],
             "payment_destination": "Надходження кредитних коштів за кредитом №" + str(credit_id)
         }
-        # Виклик функції для створення транзакції безпосередньо
+        # Calling the function to create a transaction directly
         create_transaction_response = create_transaction_internal(transaction_data)
         if create_transaction_response.get("error"):
             raise Exception(create_transaction_response["error"])
@@ -1570,9 +1570,9 @@ def card_transaction():
         transaction_list = []
 
         for t in transactions:
-            # Якщо ми відправляємо гроші самому собі (payer_id = receiver_id), додаємо дві транзакції
+            # If we send money to ourselves (payer_id = receiver_id), we add two transactions
             if t[3] == t[4]:
-                # Перша транзакція - надходження
+                # First transaction - receipt
                 cursor.execute("""
                         SELECT c.name
                         FROM currency_conversion c
@@ -1606,7 +1606,7 @@ def card_transaction():
                 }
                 transaction_list.append(transaction_info)
             else:
-                # Якщо payer_id і receiver_id різні, додаємо звичайну транзакцію
+                # If payer_id and receiver_id are different, add a regular transaction
                 transaction_type = '+' if t[4] == card_number else '-'
 
                 cursor.execute("""
@@ -1642,7 +1642,7 @@ def pay_credit():
         return redirect(url_for('login'))
     cursor = mysql.connection.cursor()
 
-    # Отримання client_id з таблиці client
+    # Getting client_id from the client table
     cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
     client = cursor.fetchone()
     if not client:
@@ -1662,7 +1662,7 @@ def pay_credit():
     try:
         cursor = mysql.connection.cursor()
 
-        # Отримання client_id з таблиці client
+        # Getting client_id from the client table
         cursor.execute("SELECT client_id FROM client WHERE user_id = %s", (user_id,))
         client = cursor.fetchone()
         if not client:
@@ -1671,7 +1671,7 @@ def pay_credit():
 
         client_id = client[0]
 
-        # Отримання акаунтів типу 1 з таблиці account
+        # Getting type 1 accounts from the account table
         cursor.execute("SELECT account_id FROM account WHERE client_id = %s AND account_type = 1", (client_id,))
         accounts = cursor.fetchall()
 
@@ -1681,7 +1681,7 @@ def pay_credit():
 
         account_ids = [account[0] for account in accounts]
 
-        # Отримання інформації про карткові акаунти з таблиці card_account
+        # Getting information about card accounts from the card_account table
         cursor.execute("""
                             SELECT card_account_id, credit_number, my_money, sum, credit_limit, exporation_date, cvv_code, card_type
                             FROM card_account WHERE account_id = %s
@@ -1713,17 +1713,17 @@ def pay_credit():
 def pay_for_credit():
     if request.method == 'POST':
         try:
-            # Отримання даних із форми
-            card_id = request.form.get('card_number')  # ID картки
-            credit_id = request.form.get('credit_id')  # ID кредиту
-            payment_sum = request.form.get('sum')  # Сума платежу
+            # Getting data from a form
+            card_id = request.form.get('card_number')  # Card ID
+            credit_id = request.form.get('credit_id')  # Credit ID
+            payment_sum = request.form.get('sum')  # Payment amount
 
-            # Конвертація даних
+            # Data conversion
             card_id = int(card_id)
             credit_id = int(credit_id)
             payment_sum_uah = int(payment_sum)
 
-            # Додати основну бізнес-логіку (наприклад, списання коштів з картки та погашення кредиту)
+            # Add basic business logic (e.g., debiting a card and repaying a loan)
             cursor = mysql.connection.cursor()
 
             cursor.execute(
@@ -1738,7 +1738,7 @@ def pay_for_credit():
             )
             payment_system_id = cursor.fetchone()
 
-            # Перевірка балансу картки
+            # Checking card balance
             cursor.execute("SELECT sum FROM card_account WHERE card_account_id = %s", (card_id,))
             card_balance = cursor.fetchone()
             if not card_balance:
@@ -1757,13 +1757,13 @@ def pay_for_credit():
                 flash("Недостатньо коштів на рахунку.", "error")
                 return redirect(url_for('pay_credit'))
 
-            # Списання коштів з картки
+            # Debiting funds from the card
             cursor.execute(
                 "UPDATE card_account SET sum = sum - %s WHERE card_account_id = %s",
                 (payment_sum, card_id)
             )
 
-            # Оновлення кредиту
+            # Credit renewal
             cursor.execute(
                 "UPDATE credit SET amount_repaid = amount_repaid + %s WHERE credit_id = %s",
                 (payment_sum_uah, credit_id)
@@ -1802,7 +1802,7 @@ def pay_for_credit():
             flash(f"Помилка: {str(e)}", "error")
             return redirect(url_for('pay_credit'))
 
-    # Для методу GET повертаємо форму
+    # For the GET method, we return the form
     return render_template('credit_history.html')
 
 @app.route('/transaction_pdf/<transaction_id>')
@@ -1827,10 +1827,10 @@ def transaction_pdf(transaction_id):
 
 def get_transaction_data(transaction_id):
     try:
-        # Отримання з'єднання з базою
+        # Getting a connection to the base
         cursor = mysql.connection.cursor()
 
-        # Виконання запиту для отримання транзакції за transaction_id
+        # Execute a query to get the transaction by transaction_id
         cursor.execute("""
             SELECT transaction_id, sum, date, payer_id, receiver_id, status, 
                    payment_destination, payment_system_id, currency 
@@ -1838,10 +1838,10 @@ def get_transaction_data(transaction_id):
             WHERE transaction_id = %s
         """, (transaction_id,))
 
-        # Отримання результату
+        # Getting the result
         transaction = cursor.fetchone()
 
-        # Якщо транзакція не знайдена
+        # If the transaction is not found
         if transaction is None:
             return {"error": "Транзакцію не знайдено"}
 
@@ -1876,7 +1876,7 @@ def get_transaction_data(transaction_id):
                 cursor.execute("""SELECT surname, name, patronymic FROM client WHERE client_id = %s""", (client_id,))
                 snp = cursor.fetchone()
                 receiver_id = str(snp[0]) + ' ' + str(snp[1]) + ' ' + str(snp[2])
-        # Формуємо словник з отриманими даними
+        # We form a dictionary with the obtained data
         transaction_data = {
             "transaction_id": transaction[0],
             "sum": transaction[1],
@@ -1892,7 +1892,6 @@ def get_transaction_data(transaction_id):
         return transaction_data
 
     except Exception as e:
-        # У випадку помилки
         return {"error": str(e)}
 
 @app.route('/generate_statement/<int:card_id>', methods=['POST'])
