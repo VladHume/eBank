@@ -42,7 +42,7 @@ Recommended tables used by the app (inferred from code):
 - `account`, `card_account` — account and card details (balances, currency, card numbers).
 - `transaction` — transaction history used for statements and logs.
 - `currency_conversion`, `payment_systems`, `card_types`, `deposits`, `credit`, `quarantors`.
-The app runs many SELECT / INSERT / UPDATE / DELETE queries; consult `app.py` for exact fields and logic. fileciteturn1file0
+The app runs many SELECT / INSERT / UPDATE / DELETE queries; consult `app.py` for exact fields and logic.
 
 ## Important Routes
 - `/` → redirects to `/login`
@@ -54,7 +54,6 @@ The app runs many SELECT / INSERT / UPDATE / DELETE queries; consult `app.py` fo
 - `/generate_statement/<card_id>` → generates a 30‑day statement PDF
 - `/deposits`, `/take_deposit` → deposit operations
 - `/credit`, `/take_credit`, `/pay_for_credit` → credit operations  
-Full route list and implementation details are in `app.py`. fileciteturn1file0
 
 ## Running the App
 1. Ensure MySQL and wkhtmltopdf are installed and configured.
@@ -62,4 +61,4 @@ Full route list and implementation details are in `app.py`. fileciteturn1f
 ```bash
 python app.py
 ```
-By default it runs in debug mode (`app.run(debug=True)` in `app.py`). fileciteturn1file13
+By default it runs in debug mode (`app.run(debug=True)` in `app.py`). 
